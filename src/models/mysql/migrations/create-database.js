@@ -6,7 +6,7 @@ const {
 const mysql = require("mysql2/promise");
 
 // 設定 secret_name 和 AWS 連接的區域
-const secret_name = "rds!db-f200bc9a-59ac-4198-91fb-acf6b9e5917a";
+const secret_name = "rds!db-f200bc9a-59ac-4198-91fb-acf6b9e5917a"; // 你的 Secret 名稱
 const region = "ap-northeast-1";
 
 // 創建 Secrets Manager 客戶端
@@ -32,34 +32,25 @@ async function getSecret() {
   return JSON.parse(response.SecretString); // 返回解析後的 JSON 對象
 }
 
-// 使用秘密創建 MySQL 連接池
-async function createPool() {
+// 使用 Secret 中的用戶名和密碼創建 MySQL 資料庫
+async function createDatabase() {
   const secret = await getSecret();
 
-  const pool = mysql.createPool({
-    host: process.env.DB_HOST, // 使用環境變數
-    port: process.env.DB_PORT, // 使用環境變數
-    user: secret.username,
-    password: secret.password,
-    database: process.env.DB_NAME, // 使用環境變數
-    waitForConnections: true,
-    connectionLimit: 10, // 最大連接數
-    queueLimit: 0, // 排隊限制
+  const connection = await mysql.createConnection({
+    host: "127.0.0.1", // 本地回環地址
+    port: 3307, // SSH 隧道的本地端口
+    user: secret.username, // 從 Secret 中獲取用戶名
+    password: secret.password, // 從 Secret 中獲取密碼
   });
 
-  // 測試連接
   try {
-    const connection = await pool.getConnection();
-    console.log("Connected to the database as id " + connection.threadId);
-    connection.release(); // 釋放連接回連接池
+    await connection.query("CREATE DATABASE `rtv-db`;");
+    console.log("Database 'rtv-db' created successfully.");
   } catch (err) {
-    console.error("Error connecting to the database:", err.stack);
+    console.error("Error creating database:", err.stack);
+  } finally {
+    await connection.end();
   }
-
-  return pool;
 }
 
-// 調用 createPool 創建並導出連接池
-const poolPromise = createPool();
-
-module.exports = poolPromise;
+createDatabase();

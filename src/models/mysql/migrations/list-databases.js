@@ -32,34 +32,25 @@ async function getSecret() {
   return JSON.parse(response.SecretString); // 返回解析後的 JSON 對象
 }
 
-// 使用秘密創建 MySQL 連接池
-async function createPool() {
+// 連接資料庫並列出所有資料庫名稱
+async function listDatabases() {
   const secret = await getSecret();
 
-  const pool = mysql.createPool({
+  const connection = await mysql.createConnection({
     host: process.env.DB_HOST, // 使用環境變數
     port: process.env.DB_PORT, // 使用環境變數
     user: secret.username,
     password: secret.password,
-    database: process.env.DB_NAME, // 使用環境變數
-    waitForConnections: true,
-    connectionLimit: 10, // 最大連接數
-    queueLimit: 0, // 排隊限制
   });
 
-  // 測試連接
   try {
-    const connection = await pool.getConnection();
-    console.log("Connected to the database as id " + connection.threadId);
-    connection.release(); // 釋放連接回連接池
+    const [rows] = await connection.query("SHOW DATABASES;");
+    console.log("Databases:", rows);
   } catch (err) {
-    console.error("Error connecting to the database:", err.stack);
+    console.error("Error executing query:", err.stack);
+  } finally {
+    await connection.end();
   }
-
-  return pool;
 }
 
-// 調用 createPool 創建並導出連接池
-const poolPromise = createPool();
-
-module.exports = poolPromise;
+listDatabases();

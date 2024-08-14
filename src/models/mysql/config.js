@@ -29,7 +29,9 @@ async function getSecret() {
     throw error;
   }
 
-  return JSON.parse(response.SecretString); // 返回解析後的 JSON 對象
+  const secret = JSON.parse(response.SecretString);
+  console.log("Retrieved secret:", secret); // ! 列出 secret (測試)
+  return secret; // 返回解析後的 JSON 對象
 }
 
 // 使用秘密創建 MySQL 連接池

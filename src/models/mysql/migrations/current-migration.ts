@@ -1,17 +1,15 @@
-import poolPromise from "../config";
-import { Pool, RowDataPacket } from "mysql2/promise";
+import { executeQuery } from "../config";
+import { RowDataPacket } from "mysql2/promise";
 
 async function insertData(): Promise<void> {
   try {
-    const db: Pool = await poolPromise;
-
-    await db.query(`
+    await executeQuery(`
       INSERT INTO votes (title, description) VALUES
       ('Vote 1', 'Description for vote 1'),
       ('Vote 2', 'Description for vote 2');
     `);
 
-    await db.query(`
+    await executeQuery(`
       INSERT INTO vote_options (vote_id, option_name) VALUES
       (1, 'Option 1 for Vote 1'),
       (1, 'Option 2 for Vote 1'),
@@ -19,7 +17,7 @@ async function insertData(): Promise<void> {
       (2, 'Option 2 for Vote 2');
     `);
 
-    await db.query(`
+    await executeQuery(`
       INSERT INTO vote_responses (vote_id, option_id, voter_name) VALUES
       (1, 1, 'Voter 1'),
       (1, 2, 'Voter 2'),
@@ -29,7 +27,7 @@ async function insertData(): Promise<void> {
 
     console.log("Test data inserted successfully.");
 
-    const [tables] = await db.query<RowDataPacket[]>("SHOW TABLES;");
+    const tables = await executeQuery<RowDataPacket>("SHOW TABLES;");
     console.log("Tables in the database:", tables);
   } catch (err) {
     console.error("Error executing query:", (err as Error).stack);
@@ -38,20 +36,16 @@ async function insertData(): Promise<void> {
 
 async function tableQuery(): Promise<void> {
   try {
-    const [tables] = await db.query<RowDataPacket[]>("SHOW TABLES;");
+    const tables = await executeQuery<RowDataPacket>("SHOW TABLES;");
     console.log("Tables in the database:", tables);
 
-    const [votes] = await db.query<RowDataPacket[]>("SELECT * FROM votes;");
+    const votes = await executeQuery<RowDataPacket>("SELECT * FROM votes;");
     console.log("Votes table content:", votes);
 
-    const [voteOptions] = await db.query<RowDataPacket[]>(
-      "SELECT * FROM vote_options;"
-    );
+    const voteOptions = await executeQuery<RowDataPacket>("SELECT * FROM vote_options;");
     console.log("Vote options table content:", voteOptions);
 
-    const [voteResponses] = await db.query<RowDataPacket[]>(
-      "SELECT * FROM vote_responses;"
-    );
+    const voteResponses = await executeQuery<RowDataPacket>("SELECT * FROM vote_responses;");
     console.log("Vote responses table content:", voteResponses);
   } catch (err) {
     console.error("Error executing query:", (err as Error).stack);

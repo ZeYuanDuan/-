@@ -1,12 +1,19 @@
-import dotenv from 'dotenv';
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
-import mysql from 'mysql2/promise';
+import dotenv from "dotenv";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import mysql from "mysql2/promise";
 
 dotenv.config(); // 加載 .env 文件中的環境變數
 
-// 設定 secret_name 和 AWS 連接的區域
-const secret_name = "rds!db-f200bc9a-59ac-4198-91fb-acf6b9e5917a";
-const region = "ap-northeast-1";
+// 從環境變量中讀取 secret_name 和 region
+const secret_name = process.env.AWS_SECRET_NAME;
+const region = process.env.AWS_REGION;
+
+if (!secret_name || !region) {
+  throw new Error("AWS_SECRET_NAME 或 AWS_REGION 環境變量未設置");
+}
 
 // 創建 Secrets Manager 客戶端
 const client = new SecretsManagerClient({
@@ -16,7 +23,6 @@ const client = new SecretsManagerClient({
 interface DatabaseSecret {
   username: string;
   password: string;
-  // 其他可能的字段
 }
 
 // 獲取秘密
@@ -28,7 +34,7 @@ async function getSecret(): Promise<DatabaseSecret> {
         VersionStage: "AWSCURRENT", // 默認為 AWSCURRENT
       })
     );
-    return JSON.parse(response.SecretString || '{}');
+    return JSON.parse(response.SecretString || "{}");
   } catch (error) {
     console.error("Error retrieving secret:", error);
     throw error;
@@ -43,7 +49,7 @@ async function initializePool(): Promise<void> {
   const secret = await getSecret();
   pool = mysql.createPool({
     host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '3306'),
+    port: parseInt(process.env.DB_PORT || "3306"),
     user: secret.username,
     password: secret.password,
     database: process.env.DB_NAME,
@@ -70,12 +76,14 @@ export async function getConnection(): Promise<mysql.PoolConnection> {
   return pool!.getConnection();
 }
 
-export async function releaseConnection(connection: mysql.PoolConnection): Promise<void> {
+export async function releaseConnection(
+  connection: mysql.PoolConnection
+): Promise<void> {
   connection.release();
 }
 
 export async function executeQuery<T>(
-  query: string, 
+  query: string,
   params?: any[]
 ): Promise<T[]> {
   const connection = await getConnection();

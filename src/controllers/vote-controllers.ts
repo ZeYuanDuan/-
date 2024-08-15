@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
-import { RowDataPacket, PoolConnection } from "mysql2/promise";
-import { getConnection, releaseConnection, executeQuery } from "../models/mysql/config";
+import { RowDataPacket, PoolConnection, ResultSetHeader } from "mysql2/promise";
+import {
+  getConnection,
+  releaseConnection,
+  executeQuery,
+} from "../models/mysql/config";
 
 interface VoteOption {
   id: number;
@@ -23,7 +27,13 @@ const voteControllers: VoteControllers = {
     const { title, description, options } = req.body;
 
     // 檢查必要參數
-    if (!title || !description || !options || !Array.isArray(options) || options.length === 0) {
+    if (
+      !title ||
+      !description ||
+      !options ||
+      !Array.isArray(options) ||
+      options.length === 0
+    ) {
       res.status(400).json({
         success: false,
         data: null,
@@ -41,20 +51,26 @@ const voteControllers: VoteControllers = {
       await connection.beginTransaction();
 
       // 插入新投票記錄
-      const [result] = await connection.query<RowDataPacket[]>(
-        "INSERT INTO votes (title, description) VALUES (?, ?) RETURNING id",
+      const [insertResult] = await connection.query<ResultSetHeader>(
+        "INSERT INTO votes (title, description) VALUES (?, ?)",
         [title, description]
       );
-      const voteId = (result[0] as RowDataPacket).id;
+      const voteId = insertResult.insertId;
 
-      // 插入投票選項
       const insertedOptions: VoteOption[] = [];
       for (let option of options) {
-        const [optionRows] = await connection.query<RowDataPacket[]>(
-          "INSERT INTO vote_options (vote_id, option_name) VALUES (?, ?) RETURNING id, option_name",
+        // 插入投票選項
+        const [insertResult] = await connection.query<ResultSetHeader>(
+          "INSERT INTO vote_options (vote_id, option_name) VALUES (?, ?)",
           [voteId, option]
         );
-        insertedOptions.push(optionRows[0] as VoteOption);
+
+        const insertedId = insertResult.insertId;
+
+        insertedOptions.push({
+          id: insertedId,
+          option_name: option,
+        } as VoteOption);
       }
 
       await connection.commit();
@@ -177,11 +193,11 @@ const voteControllers: VoteControllers = {
 
     try {
       // 獲取投票基本信息
-      const voteRows = await executeQuery<{ title: string; description: string }>(
-        "SELECT title, description FROM votes WHERE id = ?",
-        [id]
-      );
-      
+      const voteRows = await executeQuery<{
+        title: string;
+        description: string;
+      }>("SELECT title, description FROM votes WHERE id = ?", [id]);
+
       if (voteRows.length === 0) {
         res.status(404).json({
           success: false,
@@ -193,7 +209,7 @@ const voteControllers: VoteControllers = {
         });
         return;
       }
-      
+
       const vote = voteRows[0];
 
       // 獲取投票選項和票數
@@ -206,13 +222,19 @@ const voteControllers: VoteControllers = {
         [id]
       );
 
-      const totalVotes = voteResults.reduce((sum, option) => sum + Number(option.votes), 0);
+      const totalVotes = voteResults.reduce(
+        (sum, option) => sum + Number(option.votes),
+        0
+      );
 
       const optionsWithPercentage = voteResults.map((opt) => ({
         id: opt.id,
         name: opt.option_name,
         votes: Number(opt.votes),
-        percentage: totalVotes > 0 ? ((Number(opt.votes) / totalVotes) * 100).toFixed(2) + "%" : "0%",
+        percentage:
+          totalVotes > 0
+            ? ((Number(opt.votes) / totalVotes) * 100).toFixed(2) + "%"
+            : "0%",
       }));
 
       res.status(200).json({

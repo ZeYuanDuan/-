@@ -1,7 +1,7 @@
 {
   "name": "real-time-voting",
   "version": "1.0.0",
-  "description": "",
+  "description": "A high-performance, real-time online voting system capable of handling heavy traffic and providing instant result updates.",
   "main": "app.js",
   "scripts": {
     "start": "node dist/app.js",
@@ -9,8 +9,7 @@
     "build": "tsc",
     "test-connection": "ts-node src/models/mysql/migrations/test-connection.ts"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Ze-Yuan <zyd.zeyuanduan@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.629.0",

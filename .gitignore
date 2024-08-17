@@ -131,3 +131,6 @@ dist
 
 # Ignore Dockerfile
 Dockerfile
+
+# 忽略開發日誌
+DEV_LOG.md

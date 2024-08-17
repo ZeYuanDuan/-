@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { RowDataPacket, PoolConnection, ResultSetHeader } from "mysql2/promise";
+import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { getConnection, releaseConnection } from "../models/mysql/config";
 import { getVoteData } from "../utils/vote-data";
 import { processVote } from "../utils/vote-processing";

@@ -22,7 +22,7 @@ interface VoteData {
 export async function getVoteData(
   voteId: string | number
 ): Promise<VoteData | null> {
-  // 获取投票基本信息
+  // 獲取投票基本訊息
   const voteRows = await executeQuery<{
     title: string;
     description: string;
@@ -34,7 +34,7 @@ export async function getVoteData(
 
   const vote = voteRows[0];
 
-  // 获取投票选项和票数
+  // 獲取投票選項和票數
   const voteResults = await executeQuery<VoteResult>(
     `SELECT o.id, o.option_name, COUNT(r.id) AS votes
     FROM vote_options o

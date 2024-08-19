@@ -2,6 +2,10 @@ import { Server, Socket } from "socket.io";
 import { processVote } from "../utils/vote-processing";
 import { getVoteData } from "../utils/vote-data";
 
+const io = new Server();
+
+export { io };
+
 export function setupVoteWebSockets(io: Server) {
   io.on("connection", (socket: Socket) => {
     socket.on("voteForTopic", async (data) => {

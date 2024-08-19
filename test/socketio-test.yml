@@ -1,0 +1,14 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+  engines:
+    socketio: {}
+scenarios:
+  - engine: "socketio"
+    flow:
+      - emit:
+          channel: "voteForTopic"
+          data: { voteId: "1", optionId: "1", voterName: "測試用戶" }
+      - wait: 1

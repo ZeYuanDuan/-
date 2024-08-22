@@ -2,13 +2,18 @@ config:
   target: "http://localhost:3000"
   phases:
     - duration: 60
-      arrivalRate: 10
+      arrivalRate: 100
   engines:
     socketio: {}
+  processor: "./generateOptionId.js"
 scenarios:
   - engine: "socketio"
     flow:
+      - function: "generateOptionId"
       - emit:
           channel: "voteForTopic"
-          data: { voteId: "1", optionId: "1", voterName: "測試用戶" }
+          data:
+            voteId: "1"
+            optionId: "{{ optionId }}"
+            voterName: "測試用戶"
       - wait: 1

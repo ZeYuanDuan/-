@@ -32,13 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use(router);
 
-// io.on("connection", (socket) => {
-//   console.log("A user connected");
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected");
-//   });
-// });
-
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

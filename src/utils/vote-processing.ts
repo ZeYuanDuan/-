@@ -1,5 +1,4 @@
-import { PoolConnection, RowDataPacket } from "mysql2/promise";
-import { getConnection, releaseConnection } from "../models/mysql/config";
+import redisClient from "../models/redis/config";
 
 interface VoteProcessingResult {
   success: boolean;
@@ -24,18 +23,12 @@ export async function processVote(
     };
   }
 
-  let connection: PoolConnection | null = null;
   try {
-    connection = await getConnection();
-    await connection.beginTransaction();
-
     // 檢查選項是否存在
-    const [optionRows] = await connection.query<RowDataPacket[]>(
-      "SELECT * FROM vote_options WHERE id = ? AND vote_id = ?",
-      [optionId, voteId]
-    );
-    if (optionRows.length === 0) {
-      await connection.rollback();
+    const optionKey = `vote:${voteId}:option:${optionId}`;
+    const exists = await redisClient.exists(optionKey);
+
+    if (!exists) {
       return {
         success: false,
         error: {
@@ -45,16 +38,15 @@ export async function processVote(
       };
     }
 
-    // 插入投票回應
-    await connection.query(
-      "INSERT INTO vote_responses (vote_id, option_id, voter_name) VALUES (?, ?, ?)",
-      [voteId, optionId, voterName]
-    );
+    // 增加投票計數
+    await redisClient.incr(optionKey);
 
-    await connection.commit();
+    // 存儲投票回應
+    const responseKey = `vote:${voteId}:response`;
+    await redisClient.sadd(responseKey, `${voterName}:${optionId}`);
+
     return { success: true };
   } catch (error) {
-    if (connection) await connection.rollback();
     console.error("投票處理過程中發生錯誤:", error);
     return {
       success: false,
@@ -63,7 +55,5 @@ export async function processVote(
         details: (error as Error).message,
       },
     };
-  } finally {
-    if (connection) releaseConnection(connection);
   }
 }

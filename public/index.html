@@ -44,12 +44,29 @@
         optionsContainer.innerHTML = "";
         voteData.options.forEach((option) => {
           const optionElement = document.createElement("div");
+          optionElement.id = `option-${option.id}`;
           optionElement.textContent = `${option.name}: ${option.votes} 票 (${option.percentage})`;
           const voteButton = document.createElement("button");
           voteButton.textContent = "投票";
           voteButton.onclick = () => vote(option.id);
           optionElement.appendChild(voteButton);
           optionsContainer.appendChild(optionElement);
+        });
+      }
+
+      function updateVoteCounts(voteData) {
+        document.getElementById(
+          "totalVotes"
+        ).textContent = `總票數: ${voteData.totalVotes}`;
+        voteData.options.forEach((option) => {
+          const optionElement = document.getElementById(`option-${option.id}`);
+          if (optionElement) {
+            optionElement.textContent = `${option.name}: ${option.votes} 票 (${option.percentage})`;
+            const voteButton = document.createElement("button");
+            voteButton.textContent = "投票";
+            voteButton.onclick = () => vote(option.id);
+            optionElement.appendChild(voteButton);
+          }
         });
       }
 

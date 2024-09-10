@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { getConnection, releaseConnection } from "../models/mysql/config";
-import { getVoteData } from "../utils/vote-data";
-import { processVote } from "../utils/vote-processing";
+import { getVoteDataFromMysql } from "../models/mysql/services/voteService";
+import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
 
 interface VoteOption {
   id: number;
@@ -105,7 +105,7 @@ const voteControllers: VoteControllers = {
     const { id: voteId } = req.params;
     const { optionId, voterName } = req.body;
 
-    const result = await processVote(voteId, optionId, voterName);
+    const result = await storeVoteDataToRedis(voteId, optionId, voterName);
 
     if (!result.success) {
       res.status(result.error?.message === "選項未找到" ? 404 : 400).json({
@@ -140,7 +140,7 @@ const voteControllers: VoteControllers = {
     }
 
     try {
-      const voteData = await getVoteData(id);
+      const voteData = await getVoteDataFromMysql(id);
 
       if (!voteData) {
         res.status(404).json({

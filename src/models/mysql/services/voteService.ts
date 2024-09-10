@@ -1,4 +1,4 @@
-import { executeQuery } from "../models/mysql/config";
+import { executeQuery } from "../config";
 
 interface VoteResult {
   id: number;
@@ -19,7 +19,7 @@ interface VoteData {
   }[];
 }
 
-export async function getVoteData(
+export async function getVoteDataFromMysql(
   voteId: string | number
 ): Promise<VoteData | null> {
   // 獲取投票基本訊息

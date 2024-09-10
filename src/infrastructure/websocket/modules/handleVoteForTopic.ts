@@ -1,13 +1,15 @@
 import { Socket } from "socket.io";
 import { Channel } from "amqplib";
-import { QUEUE_NAME, VoteData } from "./constants";
+import { QUEUE_NAME } from "../../../shared/constants";
+import { VoteData } from "../../../shared/types";
+import { WEB_SOCKET_CHANNELS } from "../webSocketChannels";
 
 export function handleVoteForTopic(socket: Socket, channel: Channel) {
   return async (data: VoteData) => {
     const { voteId, optionId, voterName } = data;
 
     if (!voteId || !optionId || !voterName) {
-      socket.emit(`voteForTopic:${voteId}:error`, {
+      socket.emit(WEB_SOCKET_CHANNELS.VOTE_FOR_TOPIC_ERROR(voteId), {
         success: false,
         error: "無效的投票數據",
       });
@@ -24,20 +26,20 @@ export function handleVoteForTopic(socket: Socket, channel: Channel) {
       );
 
       if (sent) {
-        socket.emit(`voteForTopic:${voteId}:success`, {
+        socket.emit(WEB_SOCKET_CHANNELS.VOTE_FOR_TOPIC_SUCCESS(voteId), {
           success: true,
           message: "投票已接收並正在處理",
         });
       } else {
         await new Promise((resolve) => channel.once("drain", resolve));
-        socket.emit(`voteForTopic:${voteId}:success`, {
+        socket.emit(WEB_SOCKET_CHANNELS.VOTE_FOR_TOPIC_SUCCESS(voteId), {
           success: true,
           message: "投票已接收並正在處理",
         });
       }
     } catch (error) {
       console.error("發送投票到 RabbitMQ 時發生錯誤:", error);
-      socket.emit(`voteForTopic:${voteId}:error`, {
+      socket.emit(WEB_SOCKET_CHANNELS.VOTE_FOR_TOPIC_ERROR(voteId), {
         success: false,
         error: "處理投票時發生錯誤",
       });

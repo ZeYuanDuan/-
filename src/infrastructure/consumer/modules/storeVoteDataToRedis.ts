@@ -1,4 +1,4 @@
-import redisClient from "../models/redis/config";
+import { checkOptionExists, incrementVote, storeVoteResponse } from "../../../models/redis/services/voteService";
 
 interface VoteProcessingResult {
   success: boolean;
@@ -8,7 +8,7 @@ interface VoteProcessingResult {
   };
 }
 
-export async function processVote(
+export async function storeVoteDataToRedis(
   voteId: string,
   optionId: string,
   voterName: string
@@ -25,8 +25,7 @@ export async function processVote(
 
   try {
     // 檢查選項是否存在
-    const optionKey = `vote:${voteId}:option:${optionId}`;
-    const exists = await redisClient.exists(optionKey);
+    const exists = await checkOptionExists(voteId, optionId);
 
     if (!exists) {
       return {
@@ -39,11 +38,10 @@ export async function processVote(
     }
 
     // 增加投票計數
-    await redisClient.incr(optionKey);
+    await incrementVote(voteId, optionId);
 
     // 存儲投票回應
-    const responseKey = `vote:${voteId}:response`;
-    await redisClient.sadd(responseKey, `${voterName}:${optionId}`);
+    await storeVoteResponse(voteId, voterName, optionId);
 
     return { success: true };
   } catch (error) {

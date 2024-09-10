@@ -1,5 +1,5 @@
 import { Channel } from "amqplib";
-import { createChannel } from "./config";
+import { createChannel } from "../config";
 
 export async function purgeQueue(queueName: string): Promise<void> {
   let channel: Channel | null = null;

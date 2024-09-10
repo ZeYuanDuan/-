@@ -1,4 +1,7 @@
-import redisClient from "../models/redis/config";
+import {
+  getOptionIds,
+  getOptionVotes,
+} from "../../../models/redis/services/voteService";
 
 interface VoteData {
   id: number;
@@ -10,14 +13,11 @@ interface VoteData {
   }[];
 }
 
-export async function getVoteData(
-  voteId: string | number
+export async function getVoteResultFromRedisAndCalculate(
+  voteId: string
 ): Promise<VoteData | null> {
   try {
-    const voteOptionsKey = `vote:${voteId}:options`;
-
-    // 獲取選項ID
-    const optionIds = await redisClient.smembers(voteOptionsKey);
+    const optionIds = await getOptionIds(voteId);
 
     if (optionIds.length === 0) {
       return null;
@@ -26,8 +26,7 @@ export async function getVoteData(
     let totalVotes = 0;
     const optionsData = await Promise.all(
       optionIds.map(async (optionId) => {
-        const optionKey = `vote:${voteId}:option:${optionId}`;
-        const votes = parseInt((await redisClient.get(optionKey)) || "0");
+        const votes = await getOptionVotes(voteId, optionId);
         totalVotes += votes;
 
         return { id: optionId, votes };

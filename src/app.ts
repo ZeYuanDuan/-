@@ -1,13 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
-import path from "path";
 import router from "./routes/index";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import { setupVoteWebSockets } from "./websockets/vote-web-sockets";
+import { setupVotingInfrastructure } from "./infrastructure/setupVotingInfrastructure";
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -17,9 +16,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
-// 設置投票 WebSocket
-setupVoteWebSockets(io);
 
 const port = process.env.PORT || 3000;
 
@@ -32,8 +28,13 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use(router);
 
-server.listen(port, () => {
+server.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
+  try {
+    await setupVotingInfrastructure(io);
+  } catch (error) {
+    console.error("Failed to initialize server:", error);
+  }
 });
 
 export { io };

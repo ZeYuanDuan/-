@@ -15,13 +15,26 @@ export function updateVoteCounts(vote) {
   vote.options.forEach((option) => {
     const optionElement = document.getElementById(`option-${option.id}`);
     if (optionElement) {
-      const optionName = optionElement.textContent.split(":")[0].trim();
-      optionElement.textContent = `${optionName}: ${option.votes} 票 (${option.percentage})`;
+      // 更新進度條
+      const progressContainer = optionElement.querySelector(".d-flex");
+      if (progressContainer) {
+        progressContainer.innerHTML = `
+          <div class="progress flex-grow-1 mr-2">
+            <div 
+              class="progress-bar" 
+              role="progressbar" 
+              style="width: ${option.percentage}">
+              ${option.votes} 票
+            </div>
+          </div>
+          <span class="text-muted">${option.percentage}</span>
+        `;
+      }
 
       let voteButton = optionElement.querySelector("button");
       if (!voteButton) {
         voteButton = createVoteButton(vote.id, option.id);
-        optionElement.appendChild(voteButton);
+        optionElement.querySelector(".card-body").appendChild(voteButton);
       }
     }
   });
@@ -47,17 +60,37 @@ function updateOptions(vote) {
 
 function createOptionElement(voteId, option) {
   const optionElement = document.createElement("div");
+  optionElement.className = "col-12";
   optionElement.id = `option-${option.id}`;
-  optionElement.textContent = `${option.name}: ${option.votes} 票 (${option.percentage})`;
+
+  optionElement.innerHTML = `
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">${option.name}</h5>
+        <div class="d-flex align-items-center mb-2">
+          <div class="progress flex-grow-1 mr-2">
+            <div 
+              class="progress-bar" 
+              role="progressbar" 
+              style="width: ${option.percentage}">
+              ${option.votes} 票
+            </div>
+          </div>
+          <span class="text-muted">${option.percentage}</span>
+        </div>
+      </div>
+    </div>
+  `;
 
   const voteButton = createVoteButton(voteId, option.id);
-  optionElement.appendChild(voteButton);
+  optionElement.querySelector(".card-body").appendChild(voteButton);
 
   return optionElement;
 }
 
 function createVoteButton(voteId, optionId) {
   const voteButton = document.createElement("button");
+  voteButton.className = "btn btn-primary btn-circle btn-sm";
   voteButton.textContent = "投票";
   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
   return voteButton;

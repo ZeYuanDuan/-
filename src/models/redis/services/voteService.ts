@@ -23,13 +23,13 @@ export async function storeVoteResponse(
   optionId: string
 ): Promise<void> {
   const responseKey = REDIS_KEYS.voteResponse(voteId);
-  await redisClient.sadd(responseKey, `${voterName}:${optionId}`);
+  await redisClient.rpush(responseKey, `${voterName}:${optionId}`);
 }
 
 // 新增獲取選項 ID 的方法
 export async function getOptionIds(voteId: string): Promise<string[]> {
   const voteOptionsKey = REDIS_KEYS.voteOptions(voteId);
-  return await redisClient.smembers(voteOptionsKey);
+  return await redisClient.lrange(voteOptionsKey, 0, -1);
 }
 
 // 新增獲取選項投票數的方法

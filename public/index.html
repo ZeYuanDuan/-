@@ -3,8 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <title>(Front-End) Real-Time Vote Result</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   </head>
   <body>
     <h1 id="voteTitle">載入中...</h1>
@@ -12,104 +10,8 @@
     <div id="voteOptions"></div>
     <p id="totalVotes"></p>
     <div id="errorMessage" style="color: red"></div>
-
-    <script>
-      const API_BASE_URL = "http://localhost:3000";
-      const voteId = "1"; // TODO 替換為實際的投票 ID
-      let socket;
-
-      async function getInitialVoteResult() {
-        try {
-          const response = await axios.get(`${API_BASE_URL}/vote/${voteId}`);
-          if (response.data.success) {
-            updateVoteDisplay(response.data.data.vote);
-            initializeWebSocket();
-          } else {
-            console.error("獲取投票結果失敗:", response.data.error);
-          }
-        } catch (error) {
-          console.error("獲取投票結果時發生錯誤:", error);
-        }
-      }
-
-      function updateVoteDisplay(voteData) {
-        document.getElementById("voteTitle").textContent = voteData.title;
-        document.getElementById("voteDescription").textContent =
-          voteData.description;
-        document.getElementById(
-          "totalVotes"
-        ).textContent = `總票數: ${voteData.totalVotes}`;
-
-        const optionsContainer = document.getElementById("voteOptions");
-        optionsContainer.innerHTML = "";
-        voteData.options.forEach((option) => {
-          const optionElement = document.createElement("div");
-          optionElement.id = `option-${option.id}`;
-          optionElement.textContent = `${option.name}: ${option.votes} 票 (${option.percentage})`;
-          const voteButton = document.createElement("button");
-          voteButton.textContent = "投票";
-          voteButton.onclick = () => vote(option.id);
-          optionElement.appendChild(voteButton);
-          optionsContainer.appendChild(optionElement);
-        });
-      }
-
-      function updateVoteCounts(voteData) {
-        document.getElementById(
-          "totalVotes"
-        ).textContent = `總票數: ${voteData.totalVotes}`;
-        voteData.options.forEach((option) => {
-          const optionElement = document.getElementById(`option-${option.id}`);
-          if (optionElement) {
-            optionElement.textContent = `${option.name}: ${option.votes} 票 (${option.percentage})`;
-            const voteButton = document.createElement("button");
-            voteButton.textContent = "投票";
-            voteButton.onclick = () => vote(option.id);
-            optionElement.appendChild(voteButton);
-          }
-        });
-      }
-
-      function initializeWebSocket() {
-        socket = io(API_BASE_URL);
-
-        socket.on("connect", () => {
-          console.log("已連接到 WebSocket 服務器");
-        });
-
-        socket.on(`voteResult:${voteId}`, (data) => {
-          if (data.success) {
-            updateVoteDisplay(data.data.vote);
-          } else {
-            console.error("獲取投票結果失敗:", data.error);
-          }
-        });
-
-        socket.on(`voteForTopic:${voteId}:success`, (data) => {
-          console.log("投票成功:", data.message);
-        });
-
-        socket.on(`voteForTopic:${voteId}:error`, (error) => {
-          console.error("投票失敗:", error.error);
-        });
-      }
-
-      async function vote(optionId) {
-        try {
-          socket.emit("voteForTopic", {
-            voteId,
-            optionId,
-            voterName: "測試用戶",
-          });
-        } catch (error) {
-          console.error("發送投票請求時發生錯誤:", error);
-          document.getElementById("errorMessage").textContent =
-            "發送投票請求時發生錯誤";
-        }
-      }
-
-      // 初始加載
-      getInitialVoteResult();
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="scripts/main.js" type="module"></script>
   </body>
 </html>

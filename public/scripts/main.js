@@ -1,7 +1,7 @@
 // 應用程序入口
 import { fetchVoteResult } from "./api.js";
 import { updateVoteDisplay } from "./dom.js";
-import { initializeWebSocket, submitVote } from "./websocket.js";
+import { initializeWebSocket } from "./websocket.js";
 
 const voteId = getVoteId();
 const voterName = "測試用戶";

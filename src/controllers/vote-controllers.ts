@@ -21,13 +21,7 @@ const voteControllers: VoteControllers = {
     const { title, description, options } = req.body;
 
     // 檢查必要參數
-    if (
-      !title ||
-      !description ||
-      !options ||
-      !Array.isArray(options) ||
-      options.length === 0
-    ) {
+    if (!title || !options || !Array.isArray(options) || options.length === 0) {
       res.status(400).json({
         success: false,
         data: null,

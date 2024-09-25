@@ -1,4 +1,5 @@
 const API_BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://127.0.0.1:5500/public";
 
 async function fetchVotes() {
   try {
@@ -22,7 +23,7 @@ function createVoteRow(vote) {
             <td>${vote.description || "-"}</td>
             <td>${new Date(vote.created_at).toLocaleString()}</td>
             <td>
-                <a href="index.html?voteId=${
+                <a href="../voting/index.html?voteId=${
                   vote.id
                 }" class="btn btn-sm btn-info">
                     <i class="fas fa-eye"></i> 查看

@@ -33,5 +33,4 @@ export function submitVote(voteId, optionId, voterName) {
   } catch (error) {
     throw new Error("發送投票請求時發生錯誤: " + error.message);
   }
-
 }

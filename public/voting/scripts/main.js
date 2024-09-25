@@ -3,11 +3,11 @@ import { fetchVoteResult } from "./api.js";
 import { updateVoteDisplay } from "./dom.js";
 import { initializeWebSocket } from "./websocket.js";
 
-const voteId = getVoteId();
 const voterName = "測試用戶";
 
 async function initialize() {
   try {
+    const voteId = getVoteId();
     const vote = await fetchVoteResult(voteId);
     updateVoteDisplay(vote);
     initializeWebSocket(voteId);
@@ -22,7 +22,12 @@ function displayError(message) {
 }
 
 function getVoteId() {
-  return "1"; // TODO 替換為實際的動態投票 ID
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get("voteId");
+  if (!id) {
+    throw new Error("未提供投票 ID");
+  }
+  return id;
 }
 
 initialize();

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>投票列表</title>
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="container mt-5">
+    <h1 class="mb-4 text-center">投票列表</h1>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>標題</th>
+          <th>描述</th>
+          <th>創建時間</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="voteList">
+        <!-- 投票列表將在這裡動態插入 -->
+      </tbody>
+    </table>
+    <div class="text-center mt-4">
+      <a href="../create-vote/create-vote.html" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> 創建投票
+      </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="home.js"></script>
+  </body>
+</html>

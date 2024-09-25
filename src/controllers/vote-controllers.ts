@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { getConnection, releaseConnection } from "../models/mysql/config";
-import { getVoteDataFromMysql } from "../models/mysql/services/voteService";
+import {
+  getVoteDataFromMysql,
+  getAllVotesFromMysql,
+} from "../models/mysql/services/voteService";
 import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
 
 interface VoteOption {
@@ -10,12 +13,35 @@ interface VoteOption {
 }
 
 interface VoteControllers {
+  getVotes: (req: Request, res: Response) => Promise<void>;
   createVote: (req: Request, res: Response) => Promise<void>;
   voteForTopic: (req: Request, res: Response) => Promise<void>;
   getVoteResult: (req: Request, res: Response) => Promise<void>;
 }
 
 const voteControllers: VoteControllers = {
+  // 獲取所有投票
+  getVotes: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const votes = await getAllVotesFromMysql();
+      res.status(200).json({
+        success: true,
+        data: { votes },
+        message: "投票列表獲取成功",
+      });
+    } catch (error) {
+      console.error("獲取投票列表時發生錯誤:", error);
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          message: "獲取投票列表時發生錯誤",
+          details: (error as Error).message,
+        },
+      });
+    }
+  },
+
   // 創建新投票
   createVote: async (req: Request, res: Response): Promise<void> => {
     const { title, description, options } = req.body;

@@ -19,6 +19,34 @@ interface VoteData {
   }[];
 }
 
+export async function getAllVotesFromMysql(): Promise<VoteData[]> {
+  const votesQuery = `
+    SELECT v.id, v.title, v.description, 
+    COUNT(DISTINCT r.id) as totalVotes
+    FROM votes v
+    LEFT JOIN vote_options o ON v.id = o.vote_id
+    LEFT JOIN vote_responses r ON o.id = r.option_id
+    GROUP BY v.id, v.title, v.description
+  `;
+
+  const votes = await executeQuery<{
+    id: number;
+    title: string;
+    description: string;
+    totalVotes: number;
+  }>(votesQuery);
+
+  const voteDataPromises = votes.map(async (vote) => {
+    const options = await getVoteOptionsFromMysql(vote.id);
+    return {
+      ...vote,
+      options,
+    };
+  });
+
+  return Promise.all(voteDataPromises);
+}
+
 export async function getVoteDataFromMysql(
   voteId: string | number
 ): Promise<VoteData | null> {
@@ -66,4 +94,31 @@ export async function getVoteDataFromMysql(
     totalVotes,
     options: optionsWithPercentage,
   };
+}
+
+async function getVoteOptionsFromMysql(voteId: number) {
+  const optionsQuery = `
+    SELECT o.id, o.option_name, COUNT(r.id) as votes
+    FROM vote_options o
+    LEFT JOIN vote_responses r ON o.id = r.option_id
+    WHERE o.vote_id = ?
+    GROUP BY o.id, o.option_name
+  `;
+
+  const options = await executeQuery<VoteResult>(optionsQuery, [voteId]);
+
+  const totalVotes = options.reduce(
+    (sum, option) => sum + Number(option.votes),
+    0
+  );
+
+  return options.map((opt) => ({
+    id: opt.id,
+    name: opt.option_name,
+    votes: Number(opt.votes),
+    percentage:
+      totalVotes > 0
+        ? ((Number(opt.votes) / totalVotes) * 100).toFixed(2) + "%"
+        : "0%",
+  }));
 }

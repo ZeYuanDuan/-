@@ -1,4 +1,5 @@
-import { executeQuery } from "../config";
+import { executeQuery, getConnection, releaseConnection } from "../config";
+import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 
 interface VoteResult {
   id: number;
@@ -129,4 +130,149 @@ async function getVoteOptionsFromMysql(voteId: number) {
         ? ((Number(opt.votes) / totalVotes) * 100).toFixed(2) + "%"
         : "0%",
   }));
+}
+
+export async function deleteVoteFromMysql(voteId: number): Promise<boolean> {
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    // 刪除相關的投票選項
+    await connection.query("DELETE FROM vote_options WHERE vote_id = ?", [voteId]);
+
+    // 刪除投票
+    const [result] = await connection.query<ResultSetHeader>(
+      "DELETE FROM votes WHERE id = ?",
+      [voteId]
+    );
+
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return false;
+    }
+
+    await connection.commit();
+    return true;
+  } catch (error) {
+    if (connection) await connection.rollback();
+    throw error;
+  } finally {
+    if (connection) releaseConnection(connection);
+  }
+}
+
+export async function createVoteInMysql(title: string, description: string, options: string[]): Promise<VoteData> {
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+    const [insertResult] = await connection.query<ResultSetHeader>(
+      "INSERT INTO votes (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
+      [title, description, now, now]
+    );
+    const voteId = insertResult.insertId;
+
+    const insertedOptions = [];
+    for (let option of options) {
+      const [insertResult] = await connection.query<ResultSetHeader>(
+        "INSERT INTO vote_options (vote_id, option_name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        [voteId, option, now, now]
+      );
+
+      insertedOptions.push({
+        id: insertResult.insertId,
+        name: option,
+        votes: 0,
+        percentage: "0%"
+      });
+    }
+
+    await connection.commit();
+
+    return {
+      id: voteId,
+      title,
+      description,
+      created_at: now,
+      updated_at: now,
+      totalVotes: 0,
+      options: insertedOptions
+    };
+  } catch (error) {
+    if (connection) await connection.rollback();
+    throw error;
+  } finally {
+    if (connection) releaseConnection(connection);
+  }
+}
+
+export async function updateVoteInMysql(id: number, title: string, description: string, options: string[]): Promise<VoteData | null> {
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+    // 首先獲取原始的創建時間
+    const [originalVoteData] = await connection.query<any[]>(
+      "SELECT created_at FROM votes WHERE id = ?",
+      [id]
+    );
+
+    if (originalVoteData.length === 0) {
+      await connection.rollback();
+      return null;
+    }
+
+    const originalCreatedAt = originalVoteData[0].created_at;
+
+    const [updateResult] = await connection.query<ResultSetHeader>(
+      "UPDATE votes SET title = ?, description = ?, updated_at = ? WHERE id = ?",
+      [title, description, now, id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      await connection.rollback();
+      return null;
+    }
+
+    await connection.query("DELETE FROM vote_options WHERE vote_id = ?", [id]);
+
+    const insertedOptions = [];
+    for (let option of options) {
+      const [insertResult] = await connection.query<ResultSetHeader>(
+        "INSERT INTO vote_options (vote_id, option_name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        [id, option, now, now]
+      );
+
+      insertedOptions.push({
+        id: insertResult.insertId,
+        name: option,
+        votes: 0,
+        percentage: "0%"
+      });
+    }
+
+    await connection.commit();
+
+    return {
+      id,
+      title,
+      description,
+      updated_at: now,
+      created_at: originalCreatedAt,
+      totalVotes: 0,
+      options: insertedOptions
+    };
+  } catch (error) {
+    if (connection) await connection.rollback();
+    throw error;
+  } finally {
+    if (connection) releaseConnection(connection);
+  }
 }

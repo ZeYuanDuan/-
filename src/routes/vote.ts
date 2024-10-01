@@ -9,8 +9,12 @@ router.get("/", voteControllers.getVotes);
 
 router.post("/", voteControllers.createVote);
 
-router.post("/:id", voteControllers.voteForTopic);  // ? 這是幹嘛用的？？？
+router.post("/:id", voteControllers.voteForTopic); // ? 這是幹嘛用的？？？
 
 router.get("/:id", voteControllers.getVoteResult);
+
+router.put("/:id", voteControllers.updateVote);
+
+router.delete("/:id", voteControllers.deleteVote);
 
 export default router;

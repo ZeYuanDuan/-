@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.data.success) {
         alert("投票創建成功！");
-        window.location.href = `index.html?voteId=${response.data.data.vote.id}`;
+        window.location.href = `../voting/index.html?voteId=${response.data.data.vote.id}`;
       } else {
         alert("創建投票失敗：" + response.data.error.message);
       }

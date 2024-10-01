@@ -12,7 +12,9 @@ async function updateVoteList() {
     voteList.innerHTML =
       '<tr><td colspan="5" class="text-center">暫無投票</td></tr>';
   } else {
-    voteList.innerHTML = votes.map(createVoteRow).join("");
+    voteList.innerHTML = votes
+      .map((vote, index) => createVoteRow(vote, index + 1))
+      .join("");
   }
 }
 
@@ -32,10 +34,10 @@ async function fetchVotes() {
 
 // ? 拿掉 id 的顯示, 只依照創建時間給予排序，應對未來多使用者的需求
 // ! 目前資料庫存的 UTC 時間還是錯的，還沒找到修正方法
-function createVoteRow(vote) {
+function createVoteRow(vote, index) {
   return `
-    <tr>
-      <td class="vote-information">${vote.id}</td>  
+    <tr data-vote-id="${vote.id}">
+      <td class="vote-information">${index}</td>  
       <td class="vote-information">${vote.title}</td>
       <td class="vote-information">${convertToLocalTime(
         vote.created_at,
@@ -48,36 +50,25 @@ function createVoteRow(vote) {
         }" class="btn btn-sm btn-info me-1">
           <i class="fas fa-eye"></i> 查看
         </a>
-        <a href="../voting/edit.html?voteId=${
+        <a href="../update-vote/update-vote.html?voteId=${
           vote.id
         }" class="btn btn-sm btn-warning me-1">
           <i class="fas fa-edit"></i> 修改
         </a>
-        <button onclick="deleteVote(${vote.id})" class="btn btn-sm btn-danger">
+        <button onclick="deleteVote(this)" class="btn btn-sm btn-danger">
           <i class="fas fa-trash"></i> 刪除
         </button>
       </td>
     </tr>
-    <tr>
-      <td colspan="4" class="vote-description">
+    <tr class="vote-description" data-vote-id="${vote.id}">
+      <td colspan="4">
         ${vote.description || "----- 無描述 -----"}
       </td>
     </tr>
-    <tr>
-      <td colspan="4" class="vote-json">
+    <tr class="vote-json" data-vote-id="${vote.id}">
+      <td colspan="4">
         <pre>
-          ${JSON.stringify(
-            {
-              ...vote,
-              created_at: convertToLocalTime(
-                vote.created_at,
-                DATE_TIME_FORMAT,
-                TIME_ZONE
-              ),
-            },
-            null,
-            2
-          )}
+          ${JSON.stringify(vote, null, 2)}
         </pre>
       </td>
     </tr>
@@ -98,6 +89,30 @@ function convertToLocalTime(utcTimeString, dateTimeFormat, timeZone) {
     second: "2-digit",
     hour12: false,
   }).format(date);
+}
+
+function deleteVote(button) {
+  const voteId = button.closest("tr").dataset.voteId;
+  if (!voteId) {
+    console.error("無法找到投票ID");
+    return;
+  }
+
+  axios
+    .delete(`${API_BASE_URL}/vote/${voteId}`)
+    .then((response) => {
+      const data = response.data;
+      if (data.success) {
+        alert("投票刪除成功");
+        updateVoteList();
+      } else {
+        alert(`刪除失敗: ${data.error.message}`);
+      }
+    })
+    .catch((error) => {
+      console.error("刪除投票時發生錯誤:", error);
+      alert("刪除投票時發生錯誤");
+    });
 }
 
 // ! 測試用 HTML，顯示前端收到的 JSON 資料

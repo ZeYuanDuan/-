@@ -1,16 +1,12 @@
 import { Request, Response } from "express";
-import { PoolConnection, ResultSetHeader } from "mysql2/promise";
-import { getConnection, releaseConnection } from "../models/mysql/config";
 import {
   getVoteDataFromMysql,
   getAllVotesFromMysql,
+  deleteVoteFromMysql,
+  createVoteInMysql,
+  updateVoteInMysql,
 } from "../models/mysql/services/voteService";
 import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
-
-interface VoteOption {
-  id: number;
-  option_name: string;
-}
 
 interface VoteControllers {
   getVotes: (req: Request, res: Response) => Promise<void>;
@@ -18,6 +14,7 @@ interface VoteControllers {
   voteForTopic: (req: Request, res: Response) => Promise<void>;
   getVoteResult: (req: Request, res: Response) => Promise<void>;
   deleteVote: (req: Request, res: Response) => Promise<void>;
+  updateVote: (req: Request, res: Response) => Promise<void>;
 }
 
 const voteControllers: VoteControllers = {
@@ -47,7 +44,6 @@ const voteControllers: VoteControllers = {
   createVote: async (req: Request, res: Response): Promise<void> => {
     const { title, description, options } = req.body;
 
-    // 檢查必要參數
     if (!title || !options || !Array.isArray(options) || options.length === 0) {
       res.status(400).json({
         success: false,
@@ -60,58 +56,14 @@ const voteControllers: VoteControllers = {
       return;
     }
 
-    let connection: PoolConnection | null = null;
     try {
-      connection = await getConnection();
-      await connection.beginTransaction();
-
-      // 獲取當前 UTC 時間
-      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
-      console.log("當前時間:", now); // ! 測試用
-
-      const [insertResult] = await connection.query<ResultSetHeader>(
-        "INSERT INTO votes (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
-        [title, description, now, now]
-      );
-      const voteId = insertResult.insertId;
-
-      const insertedOptions: VoteOption[] = [];
-      for (let option of options) {
-        // 插入投票選項
-        const [insertResult] = await connection.query<ResultSetHeader>(
-          "INSERT INTO vote_options (vote_id, option_name, created_at, updated_at) VALUES (?, ?, ?, ?)",
-          [voteId, option, now, now]
-        );
-
-        const insertedId = insertResult.insertId;
-
-        insertedOptions.push({
-          id: insertedId,
-          option_name: option,
-        } as VoteOption);
-      }
-
-      await connection.commit();
-
+      const newVote = await createVoteInMysql(title, description, options);
       res.status(201).json({
         success: true,
-        data: {
-          vote: {
-            id: voteId,
-            title,
-            description,
-            created_at: now,
-            updated_at: now,
-            options: insertedOptions.map((opt) => ({
-              id: opt.id,
-              name: opt.option_name,
-            })),
-          },
-        },
+        data: { vote: newVote },
         message: "投票創建成功",
       });
     } catch (error) {
-      if (connection) await connection.rollback();
       console.error("創建投票時發生錯誤:", error);
       res.status(500).json({
         success: false,
@@ -121,8 +73,6 @@ const voteControllers: VoteControllers = {
           details: (error as Error).message,
         },
       });
-    } finally {
-      if (connection) releaseConnection(connection);
     }
   },
 
@@ -142,24 +92,10 @@ const voteControllers: VoteControllers = {
       return;
     }
 
-    let connection: PoolConnection | null = null;
     try {
-      connection = await getConnection();
-      await connection.beginTransaction();
+      const success = await deleteVoteFromMysql(Number(id));
 
-      // 刪除相關的投票選項
-      await connection.query("DELETE FROM vote_options WHERE vote_id = ?", [
-        id,
-      ]);
-
-      // 刪除投票
-      const [result] = await connection.query<ResultSetHeader>(
-        "DELETE FROM votes WHERE id = ?",
-        [id]
-      );
-
-      if (result.affectedRows === 0) {
-        await connection.rollback();
+      if (!success) {
         res.status(404).json({
           success: false,
           data: null,
@@ -171,15 +107,12 @@ const voteControllers: VoteControllers = {
         return;
       }
 
-      await connection.commit();
-
       res.status(200).json({
         success: true,
         data: null,
         message: "投票刪除成功",
       });
     } catch (error) {
-      if (connection) await connection.rollback();
       console.error("刪除投票時發生錯誤:", error);
       res.status(500).json({
         success: false,
@@ -189,8 +122,66 @@ const voteControllers: VoteControllers = {
           details: (error as Error).message,
         },
       });
-    } finally {
-      if (connection) releaseConnection(connection);
+    }
+  },
+
+  // 修改投票
+  updateVote: async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const { title, description, options } = req.body;
+
+    if (
+      !id ||
+      !title ||
+      !options ||
+      !Array.isArray(options) ||
+      options.length < 2
+    ) {
+      res.status(400).json({
+        success: false,
+        data: null,
+        error: {
+          message: "參數錯誤",
+          details: "投票ID、標題和至少兩個選項都是必須的",
+        },
+      });
+      return;
+    }
+
+    try {
+      const updatedVote = await updateVoteInMysql(
+        Number(id),
+        title,
+        description,
+        options
+      );
+      if (!updatedVote) {
+        res.status(404).json({
+          success: false,
+          data: null,
+          error: {
+            message: "投票未找到",
+            details: "指定的投票ID不存在",
+          },
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { vote: updatedVote },
+        message: "投票修改成功",
+      });
+    } catch (error) {
+      console.error("修改投票時發生錯誤:", error);
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          message: "修改投票時發生錯誤",
+          details: (error as Error).message,
+        },
+      });
     }
   },
 

@@ -30,43 +30,58 @@ async function fetchVotes() {
   }
 }
 
-// ? 拿掉 id 的顯示, 只依照創建時間給予排序
-// TODO 處理時間顯示
+// ? 拿掉 id 的顯示, 只依照創建時間給予排序，應對未來多使用者的需求
+// ! 目前資料庫存的 UTC 時間還是錯的，還沒找到修正方法
 function createVoteRow(vote) {
   return `
-        <tr>
-            <td>${vote.id}</td>  
-            <td>${vote.title}</td>
-            <td>${vote.description || "-"}</td>
-            <td>${convertToLocalTime(
-              vote.created_at,
-              DATE_TIME_FORMAT,
-              TIME_ZONE
-            )}</td>
-            <td>
-            <a href="../voting/index.html?voteId=${
-              vote.id
-            }" class="btn btn-sm btn-info me-1">
+    <tr>
+      <td class="vote-information">${vote.id}</td>  
+      <td class="vote-information">${vote.title}</td>
+      <td class="vote-information">${convertToLocalTime(
+        vote.created_at,
+        DATE_TIME_FORMAT,
+        TIME_ZONE
+      )}</td>
+      <td class="vote-information">
+        <a href="../voting/index.html?voteId=${
+          vote.id
+        }" class="btn btn-sm btn-info me-1">
           <i class="fas fa-eye"></i> 查看
         </a>
-
         <a href="../voting/edit.html?voteId=${
           vote.id
         }" class="btn btn-sm btn-warning me-1">
           <i class="fas fa-edit"></i> 修改
         </a>
-
         <button onclick="deleteVote(${vote.id})" class="btn btn-sm btn-danger">
           <i class="fas fa-trash"></i> 刪除
         </button>
-            </td>
-        </tr>
-        <tr>
-    <td colspan="5">
-        <pre>${JSON.stringify(vote, null, 2)}</pre>
-    </td>
-</tr>
-    `;
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4" class="vote-description">
+        ${vote.description || "----- 無描述 -----"}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4" class="vote-json">
+        <pre>
+          ${JSON.stringify(
+            {
+              ...vote,
+              created_at: convertToLocalTime(
+                vote.created_at,
+                DATE_TIME_FORMAT,
+                TIME_ZONE
+              ),
+            },
+            null,
+            2
+          )}
+        </pre>
+      </td>
+    </tr>
+  `;
 }
 
 // 添加時區轉換函數
@@ -83,4 +98,20 @@ function convertToLocalTime(utcTimeString, dateTimeFormat, timeZone) {
     second: "2-digit",
     hour12: false,
   }).format(date);
+}
+
+// ! 測試用 HTML，顯示前端收到的 JSON 資料
+{
+  /* <tr>
+  <td colspan="5">
+    <pre>
+      $
+      {JSON.stringify(
+        { ...vote, created_at: convertToLocalTime(vote.created_at) },
+        null,
+        2
+      )}
+    </pre>
+  </td>
+</tr>; */
 }

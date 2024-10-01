@@ -12,16 +12,20 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="home.css" />
   </head>
   <body class="container mt-5">
-    <h1 class="mb-4 text-center">投票列表</h1>
+    <div class="header-container">
+      <h1 class="header-title">投票列表</h1>
+      <a href="../create-vote/create-vote.html" class="btn create-vote-btn">
+        <i class="fas fa-plus"></i> 創建投票
+      </a>
+    </div>
     <table class="table table-striped">
       <thead>
         <tr>
-          <th>ID</th>
+          <th>序號</th>
           <th>標題</th>
-          <th>描述</th>
           <th>創建時間</th>
           <th>操作</th>
         </tr>
@@ -30,11 +34,6 @@
         <!-- 投票列表將在這裡動態插入 -->
       </tbody>
     </table>
-    <div class="text-center mt-4">
-      <a href="../create-vote/create-vote.html" class="btn btn-primary btn-lg">
-        <i class="fas fa-plus"></i> 創建投票
-      </a>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="home.js"></script>

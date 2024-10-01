@@ -11,6 +11,8 @@ interface VoteData {
   title: string;
   description: string;
   totalVotes: number;
+  created_at: string;
+  updated_at: string;
   options: {
     id: number;
     name: string;
@@ -22,11 +24,12 @@ interface VoteData {
 export async function getAllVotesFromMysql(): Promise<VoteData[]> {
   const votesQuery = `
     SELECT v.id, v.title, v.description, 
-    COUNT(DISTINCT r.id) as totalVotes
+    COUNT(DISTINCT r.id) as totalVotes,
+    v.created_at, v.updated_at
     FROM votes v
     LEFT JOIN vote_options o ON v.id = o.vote_id
     LEFT JOIN vote_responses r ON o.id = r.option_id
-    GROUP BY v.id, v.title, v.description
+    GROUP BY v.id, v.title, v.description, v.created_at, v.updated_at
   `;
 
   const votes = await executeQuery<{
@@ -34,6 +37,8 @@ export async function getAllVotesFromMysql(): Promise<VoteData[]> {
     title: string;
     description: string;
     totalVotes: number;
+    created_at: string;
+    updated_at: string;
   }>(votesQuery);
 
   const voteDataPromises = votes.map(async (vote) => {
@@ -50,11 +55,12 @@ export async function getAllVotesFromMysql(): Promise<VoteData[]> {
 export async function getVoteDataFromMysql(
   voteId: string | number
 ): Promise<VoteData | null> {
-  // 獲取投票基本訊息
   const voteRows = await executeQuery<{
     title: string;
     description: string;
-  }>("SELECT title, description FROM votes WHERE id = ?", [voteId]);
+    created_at: string;
+    updated_at: string;
+  }>("SELECT title, description, created_at, updated_at FROM votes WHERE id = ?", [voteId]);
 
   if (voteRows.length === 0) {
     return null;
@@ -91,6 +97,8 @@ export async function getVoteDataFromMysql(
     id: Number(voteId),
     title: vote.title,
     description: vote.description,
+    created_at: vote.created_at,
+    updated_at: vote.updated_at,
     totalVotes,
     options: optionsWithPercentage,
   };

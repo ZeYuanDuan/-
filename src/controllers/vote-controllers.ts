@@ -17,6 +17,7 @@ interface VoteControllers {
   createVote: (req: Request, res: Response) => Promise<void>;
   voteForTopic: (req: Request, res: Response) => Promise<void>;
   getVoteResult: (req: Request, res: Response) => Promise<void>;
+  deleteVote: (req: Request, res: Response) => Promise<void>;
 }
 
 const voteControllers: VoteControllers = {
@@ -64,10 +65,13 @@ const voteControllers: VoteControllers = {
       connection = await getConnection();
       await connection.beginTransaction();
 
-      // 插入新投票記錄
+      // 獲取當前 UTC 時間
+      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+      console.log("當前時間:", now); // ! 測試用
+
       const [insertResult] = await connection.query<ResultSetHeader>(
-        "INSERT INTO votes (title, description) VALUES (?, ?)",
-        [title, description]
+        "INSERT INTO votes (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        [title, description, now, now]
       );
       const voteId = insertResult.insertId;
 
@@ -75,8 +79,8 @@ const voteControllers: VoteControllers = {
       for (let option of options) {
         // 插入投票選項
         const [insertResult] = await connection.query<ResultSetHeader>(
-          "INSERT INTO vote_options (vote_id, option_name) VALUES (?, ?)",
-          [voteId, option]
+          "INSERT INTO vote_options (vote_id, option_name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+          [voteId, option, now, now]
         );
 
         const insertedId = insertResult.insertId;
@@ -96,6 +100,8 @@ const voteControllers: VoteControllers = {
             id: voteId,
             title,
             description,
+            created_at: now,
+            updated_at: now,
             options: insertedOptions.map((opt) => ({
               id: opt.id,
               name: opt.option_name,
@@ -112,6 +118,74 @@ const voteControllers: VoteControllers = {
         data: null,
         error: {
           message: "創建投票時發生錯誤",
+          details: (error as Error).message,
+        },
+      });
+    } finally {
+      if (connection) releaseConnection(connection);
+    }
+  },
+
+  // 刪除投票
+  deleteVote: async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({
+        success: false,
+        data: null,
+        error: {
+          message: "缺少必要參數",
+          details: "投票ID是必須的",
+        },
+      });
+      return;
+    }
+
+    let connection: PoolConnection | null = null;
+    try {
+      connection = await getConnection();
+      await connection.beginTransaction();
+
+      // 刪除相關的投票選項
+      await connection.query("DELETE FROM vote_options WHERE vote_id = ?", [
+        id,
+      ]);
+
+      // 刪除投票
+      const [result] = await connection.query<ResultSetHeader>(
+        "DELETE FROM votes WHERE id = ?",
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        await connection.rollback();
+        res.status(404).json({
+          success: false,
+          data: null,
+          error: {
+            message: "投票未找到",
+            details: "指定的投票ID不存在",
+          },
+        });
+        return;
+      }
+
+      await connection.commit();
+
+      res.status(200).json({
+        success: true,
+        data: null,
+        message: "投票刪除成功",
+      });
+    } catch (error) {
+      if (connection) await connection.rollback();
+      console.error("刪除投票時發生錯誤:", error);
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          message: "刪除投票時發生錯誤",
           details: (error as Error).message,
         },
       });

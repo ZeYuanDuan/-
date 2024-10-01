@@ -1,4 +1,8 @@
-import { checkOptionExists, incrementVote, storeVoteResponse } from "../../../models/redis/services/voteService";
+import {
+  checkOptionExists,
+  incrementVote,
+  storeVoteResponse,
+} from "../../../models/redis/services/voteService";
 
 interface VoteProcessingResult {
   success: boolean;

@@ -9,7 +9,7 @@ router.get("/", voteControllers.getVotes);
 
 router.post("/", voteControllers.createVote);
 
-router.post("/:id", voteControllers.voteForTopic);
+router.post("/:id", voteControllers.voteForTopic);  // ? 這是幹嘛用的？？？
 
 router.get("/:id", voteControllers.getVoteResult);
 

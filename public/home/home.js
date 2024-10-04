@@ -44,7 +44,7 @@ function createVoteRow(vote, index) {
         TIME_ZONE
       )}</td>
       <td class="vote-information">
-        <a href="../voting/index.html?voteId=${
+        <a href="../voting/voting.html?voteId=${
           vote.id
         }" class="btn btn-sm btn-info me-1">
           <i class="fas fa-eye"></i> 查看

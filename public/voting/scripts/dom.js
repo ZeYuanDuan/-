@@ -60,7 +60,7 @@ function updateOptions(vote) {
 
 function createOptionElement(voteId, option) {
   const optionElement = document.createElement("div");
-  optionElement.className = "col-12";
+  optionElement.className = "col-12 px-1";
   optionElement.id = `option-${option.id}`;
 
   optionElement.innerHTML = `

@@ -8,6 +8,7 @@ import {
 } from "../models/mysql/services/voteService";
 import { syncVoteDataToRedis } from "../models/redis/services/voteService";
 import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
+import { deleteVoteFromRedis } from "../models/redis/services/voteService";
 
 interface VoteControllers {
   getVotes: (req: Request, res: Response) => Promise<void>;
@@ -100,9 +101,9 @@ const voteControllers: VoteControllers = {
     }
 
     try {
-      const success = await deleteVoteFromMysql(Number(id));
+      const mysqlSuccess = await deleteVoteFromMysql(Number(id));
 
-      if (!success) {
+      if (!mysqlSuccess) {
         res.status(404).json({
           success: false,
           data: null,
@@ -112,6 +113,12 @@ const voteControllers: VoteControllers = {
           },
         });
         return;
+      }
+
+      try {
+        await deleteVoteFromRedis(id);
+      } catch (redisError) {
+        console.error("刪除 Redis 中的投票數據時發生錯誤:", redisError);
       }
 
       res.status(200).json({
@@ -172,6 +179,16 @@ const voteControllers: VoteControllers = {
           },
         });
         return;
+      }
+      try {
+        await deleteVoteFromRedis(id);
+
+        await syncVoteDataToRedis(
+          updatedVote.id,
+          updatedVote.options.map((opt) => opt.id)
+        );
+      } catch (redisError) {
+        console.error("更新 Redis 中的投票數據時發生錯誤:", redisError);
       }
 
       res.status(200).json({

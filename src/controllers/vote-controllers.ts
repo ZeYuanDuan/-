@@ -6,6 +6,7 @@ import {
   createVoteInMysql,
   updateVoteInMysql,
 } from "../models/mysql/services/voteService";
+import { syncVoteDataToRedis } from "../models/redis/services/voteService";
 import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
 
 interface VoteControllers {
@@ -58,6 +59,12 @@ const voteControllers: VoteControllers = {
 
     try {
       const newVote = await createVoteInMysql(title, description, options);
+
+      await syncVoteDataToRedis(
+        newVote.id,
+        newVote.options.map((opt) => opt.id)
+      );
+
       res.status(201).json({
         success: true,
         data: { vote: newVote },

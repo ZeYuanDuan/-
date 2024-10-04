@@ -32,7 +32,6 @@ async function fetchVotes() {
   }
 }
 
-// ? 拿掉 id 的顯示, 只依照創建時間給予排序，應對未來多使用者的需求
 // ! 目前資料庫存的 UTC 時間還是錯的，還沒找到修正方法
 function createVoteRow(vote, index) {
   return `

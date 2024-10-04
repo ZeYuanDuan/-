@@ -40,3 +40,21 @@ export async function getOptionVotes(
   const optionKey = REDIS_KEYS.voteOption(voteId, optionId);
   return parseInt((await redisClient.get(optionKey)) || "0");
 }
+
+export async function syncVoteDataToRedis(
+  voteId: number,
+  optionIds: number[]
+): Promise<void> {
+  const voteIdStr = voteId.toString();
+
+  const optionsKey = REDIS_KEYS.voteOptions(voteIdStr);
+  await redisClient.rpush(optionsKey, ...optionIds.map((id) => id.toString()));
+
+  const responseKey = REDIS_KEYS.voteResponse(voteIdStr);
+  await redisClient.rpush(responseKey, "");
+
+  for (const optionId of optionIds) {
+    const optionKey = REDIS_KEYS.voteOption(voteIdStr, optionId.toString());
+    await redisClient.set(optionKey, "0");
+  }
+}

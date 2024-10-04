@@ -54,7 +54,7 @@ function createVoteRow(vote, index) {
         }" class="btn btn-sm btn-warning me-1">
           <i class="fas fa-edit"></i> 修改
         </a>
-        <button onclick="deleteVote(this)" class="btn btn-sm btn-danger">
+        <button onclick="deleteVote(this)" class="btn btn-sm btn-danger me-1">
           <i class="fas fa-trash"></i> 刪除
         </button>
       </td>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>投票參與頁面</title>
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="participant.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12 col-md-10 col-lg-8 mx-auto text-center mt-5">
+          <div class="my-5">
+            <h1 id="voteTitle" class="text-center display-4">載入中...</h1>
+            <p id="voteDescription" class="text-center lead">請稍候...</p>
+          </div>
+
+          <form id="participationForm">
+            <div class="form-group">
+              <input
+                type="text"
+                class="form-control form-control-lg"
+                id="voterName"
+                placeholder="輸入參與者名稱"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn btn-outline-primary btn-lg">
+              加入
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="participant.js"></script>
+  </body>
+</html>

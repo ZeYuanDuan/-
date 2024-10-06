@@ -3,6 +3,25 @@ import { submitVote } from "./websocket.js";
 
 const voterName = "測試用戶"; // TODO 替換為實際的用戶名
 
+window.onload = function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const voteId = urlParams.get("voteId");
+
+  const newUrl = `http://127.0.0.1:5500/public/participant/participant.html?voteId=${voteId}`;
+
+  new QRCode(document.getElementById("qrcode"), {
+    text: newUrl,
+    width: 128,
+    height: 128,
+  });
+
+  const participantLink = document.createElement("a");
+  participantLink.href = `../participant/participant.html?voteId=${voteId}`;
+  participantLink.textContent = "參與者投票頁面";
+
+  document.getElementById("qrcode").appendChild(participantLink);
+};
+
 export function updateVoteDisplay(vote) {
   updateVoteInfo(vote);
   updateOptions(vote);

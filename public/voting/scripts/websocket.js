@@ -26,9 +26,8 @@ export function initializeWebSocket(voteId) {
     console.error("投票失敗:", error.error);
   });
 
-  // TODO 伺服器監聽投票狀態更新
   socket.on("statusUpdated", (data) => {
-    console.log("投票狀態已更新:", data.status);
+    console.log("投票狀態已更新:", data.status, "投票ID:", data.voteId);
   });
 }
 
@@ -40,10 +39,9 @@ export function submitVote(voteId, optionId, voterName) {
   }
 }
 
-export function sendVotingStatusUpdate(newStatus) {
+export function sendVotingStatusUpdate(voteId, newStatus) {
   if (socket) {
-    // TODO 伺服器監聽投票狀態更新
-    socket.emit("toggleVotingStatus", { status: newStatus });
+    socket.emit("toggleVotingStatus", { voteId: voteId, status: newStatus });
   } else {
     console.error("WebSocket 連接尚未初始化");
   }

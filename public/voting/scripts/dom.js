@@ -4,10 +4,11 @@ import { submitVote, sendVotingStatusUpdate } from "./websocket.js";
 const voterName = "測試用戶"; // TODO 替換為實際的用戶名
 
 let isVotingActive = false;
+let voteId;
 
 window.onload = function () {
   const urlParams = new URLSearchParams(window.location.search);
-  const voteId = urlParams.get("voteId");
+  voteId = urlParams.get("voteId");
 
   const newUrl = `http://127.0.0.1:5500/public/participant/participant.html?voteId=${voteId}`;
 
@@ -135,5 +136,5 @@ function toggleVotingStatus() {
   }
 
   // ! 利用 WebSocket 發送投票狀態更新至伺服器
-  sendVotingStatusUpdate(isVotingActive);
+  sendVotingStatusUpdate(voteId, isVotingActive);
 }

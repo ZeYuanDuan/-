@@ -8,4 +8,7 @@ export const REDIS_KEYS = {
 
   // 儲存投票選項的集合 (投票選項ID)
   voteOptions: (voteId: string | number) => `vote:${voteId}:options`,
+
+  // 儲存投票狀態
+  voteStatus: (voteId: string | number) => `vote:${voteId}:status`,
 };

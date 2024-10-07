@@ -61,7 +61,7 @@ function createVoteRow(vote, index) {
         }" class="btn btn-sm btn-warning me-1">
           <i class="fas fa-edit"></i> 修改
         </a>
-        <button onclick="deleteVote(this)" class="btn btn-sm btn-danger me-1">
+        <button class="btn btn-sm btn-danger me-1 delete-vote-btn">
           <i class="fas fa-trash"></i> 刪除
         </button>
       </td>
@@ -97,8 +97,7 @@ function convertToLocalTime(utcTimeString, dateTimeFormat, timeZone) {
   }).format(date);
 }
 
-function deleteVote(button) {
-  const voteId = button.closest("tr").dataset.voteId;
+function deleteVote(voteId) {
   if (!voteId) {
     console.error("無法找到投票ID");
     return;
@@ -150,3 +149,11 @@ export function updateVoteStatus(voteId, status) {
     statusCell.innerHTML = `<i class="fas ${statusIcon}"></i> <span class="font-weight-bold">${statusText}</span>`;
   }
 }
+
+document.getElementById('voteList').addEventListener('click', function(event) {
+  if (event.target.closest('.delete-vote-btn')) {
+    const button = event.target.closest('.delete-vote-btn');
+    const voteId = button.closest('tr').dataset.voteId;
+    deleteVote(voteId);
+  }
+});

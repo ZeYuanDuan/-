@@ -41,7 +41,7 @@ export async function getOptionVotes(
   return parseInt((await redisClient.get(optionKey)) || "0");
 }
 
-// 新增同步投票數據到 Redis 的方法
+// 同步投票數據到 Redis 的方法
 export async function syncVoteDataToRedis(
   voteId: number,
   optionIds: number[]
@@ -58,9 +58,13 @@ export async function syncVoteDataToRedis(
     const optionKey = REDIS_KEYS.voteOption(voteIdStr, optionId.toString());
     await redisClient.set(optionKey, "0");
   }
+
+  // 設置投票狀態，預設為 false（使用 "0" 表示）
+  const statusKey = REDIS_KEYS.voteStatus(voteIdStr);
+  await redisClient.set(statusKey, "0");
 }
 
-// 新增刪除 Redis 中投票數據的方法
+// 刪除 Redis 中投票數據的方法
 export async function deleteVoteFromRedis(voteId: string): Promise<void> {
   const optionIds = await getOptionIds(voteId);
 
@@ -74,10 +78,19 @@ export async function deleteVoteFromRedis(voteId: string): Promise<void> {
     multi.del(REDIS_KEYS.voteOption(voteId, optionId));
   }
 
+  multi.del(REDIS_KEYS.voteStatus(voteId));
+
   try {
     await multi.exec();
   } catch (error) {
-    console.error("删除 Redis 中的投票数据时发生错误:", error);
-    throw new Error("删除 Redis 中的投票数据失败");
+    console.error("刪除 Redis 中的投票數據發生錯誤:", error);
+    throw new Error("刪除 Redis 中的投票數據失敗");
   }
+}
+
+// 更新投票狀態的方法
+export async function updateVoteStatus(voteId: string, status: boolean): Promise<void> {
+  const statusKey = REDIS_KEYS.voteStatus(voteId);
+  const statusValue = status ? "1" : "0";
+  await redisClient.set(statusKey, statusValue);
 }

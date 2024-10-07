@@ -17,13 +17,29 @@ export async function incrementVote(
   await redisClient.incr(optionKey);
 }
 
+// 在 WS 持續時，將投票數據存入 Redis 的臨時鍵
 export async function storeVoteResponse(
   voteId: string,
   voterName: string,
   optionId: string
 ): Promise<void> {
-  const responseKey = REDIS_KEYS.voteResponse(voteId);
-  await redisClient.rpush(responseKey, `${voterName}:${optionId}`);
+  const tempResponseKey = REDIS_KEYS.voteTempResponse(voteId);
+  const voteTime = new Date().toISOString();
+  const encodedVoterName = encodeURIComponent(voterName);
+  const voteData = `${encodedVoterName}::${optionId}::${voteTime}`;
+
+  try {
+    await redisClient.rpush(tempResponseKey, voteData);
+  } catch (error) {
+    console.error(`存儲投票響應時發生錯誤: ${error}`);
+
+    try {
+      await redisClient.rpush(tempResponseKey, voteData);
+    } catch (retryError) {
+      console.error(`重試存儲投票響應時發生錯誤: ${retryError}`);
+      throw new Error("無法存儲投票響應");
+    }
+  }
 }
 
 // 新增獲取選項 ID 的方法
@@ -52,7 +68,6 @@ export async function syncVoteDataToRedis(
   await redisClient.rpush(optionsKey, ...optionIds.map((id) => id.toString()));
 
   const responseKey = REDIS_KEYS.voteResponse(voteIdStr);
-  await redisClient.rpush(responseKey, "");
 
   for (const optionId of optionIds) {
     const optionKey = REDIS_KEYS.voteOption(voteIdStr, optionId.toString());
@@ -89,8 +104,55 @@ export async function deleteVoteFromRedis(voteId: string): Promise<void> {
 }
 
 // 更新投票狀態的方法
-export async function updateVoteStatus(voteId: string, status: boolean): Promise<void> {
+export async function updateVoteStatus(
+  voteId: string,
+  status: boolean
+): Promise<void> {
   const statusKey = REDIS_KEYS.voteStatus(voteId);
   const statusValue = status ? "1" : "0";
   await redisClient.set(statusKey, statusValue);
+}
+
+// 新增創建臨時響應鍵的方法
+export async function createTempResponseKey(voteId: string): Promise<void> {
+  const tempResponseKey = REDIS_KEYS.voteTempResponse(voteId);
+  await redisClient.del(tempResponseKey);
+}
+
+export async function transferTempResponseToResponse(
+  voteId: string
+): Promise<void> {
+  const tempResponseKey = REDIS_KEYS.voteTempResponse(voteId);
+  const responseKey = REDIS_KEYS.voteResponse(voteId);
+
+  try {
+    const tempResponses = await redisClient.lrange(tempResponseKey, 0, -1);
+
+    if (tempResponses.length > 0) {
+      await redisClient.rpush(responseKey, ...tempResponses);
+    }
+
+    await redisClient.del(tempResponseKey);
+  } catch (error) {
+    console.error(`轉移臨時響應數據時發生錯誤: ${error}`);
+    throw new Error("無法轉移臨時響應數據");
+  }
+}
+
+export async function extractTempResponses(
+  voteId: string
+): Promise<
+  Array<{ encodedVoterName: string; optionId: string; votedAt: string }>
+> {
+  const tempResponseKey = REDIS_KEYS.voteTempResponse(voteId);
+  const responses = await redisClient.lrange(tempResponseKey, 0, -1);
+
+  return responses.map((response) => {
+    const [encodedVoterName, optionId, votedAt] = response.split("::");
+    return {
+      encodedVoterName,
+      optionId,
+      votedAt,
+    };
+  });
 }

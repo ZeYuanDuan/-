@@ -11,4 +11,7 @@ export const REDIS_KEYS = {
 
   // 儲存投票狀態
   voteStatus: (voteId: string | number) => `vote:${voteId}:status`,
+
+  // 儲存投票的臨時回應
+  voteTempResponse: (voteId: string | number) => `vote:${voteId}:TempResponse`,
 };

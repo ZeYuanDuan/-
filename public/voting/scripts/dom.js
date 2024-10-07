@@ -1,7 +1,9 @@
 // 處理 DOM 操作
-import { submitVote } from "./websocket.js";
+import { submitVote, sendVotingStatusUpdate } from "./websocket.js";
 
 const voterName = "測試用戶"; // TODO 替換為實際的用戶名
+
+let isVotingActive = false;
 
 window.onload = function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -20,6 +22,9 @@ window.onload = function () {
   participantLink.textContent = "參與者投票頁面";
 
   document.getElementById("qrcode").appendChild(participantLink);
+
+  const toggleButton = document.getElementById("toggleButton");
+  toggleButton.addEventListener("click", toggleVotingStatus);
 };
 
 export function updateVoteDisplay(vote) {
@@ -113,4 +118,22 @@ function createVoteButton(voteId, optionId) {
   voteButton.textContent = "投票";
   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
   return voteButton;
+}
+
+function toggleVotingStatus() {
+  isVotingActive = !isVotingActive;
+  const toggleButton = document.getElementById("toggleButton");
+
+  if (isVotingActive) {
+    toggleButton.textContent = "結束";
+    toggleButton.classList.remove("btn-success");
+    toggleButton.classList.add("btn-danger");
+  } else {
+    toggleButton.textContent = "開始";
+    toggleButton.classList.remove("btn-danger");
+    toggleButton.classList.add("btn-success");
+  }
+
+  // ! 利用 WebSocket 發送投票狀態更新至伺服器
+  sendVotingStatusUpdate(isVotingActive);
 }

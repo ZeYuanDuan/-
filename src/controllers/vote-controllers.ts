@@ -9,6 +9,8 @@ import {
 import { syncVoteDataToRedis } from "../models/redis/services/voteService";
 import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
 import { deleteVoteFromRedis } from "../models/redis/services/voteService";
+import { getVoteStatus } from "../models/redis/services/voteService";
+import { getAllVoteIds } from "../models/mysql/services/voteService";
 
 interface VoteControllers {
   getVotes: (req: Request, res: Response) => Promise<void>;
@@ -17,6 +19,8 @@ interface VoteControllers {
   getVoteResult: (req: Request, res: Response) => Promise<void>;
   deleteVote: (req: Request, res: Response) => Promise<void>;
   updateVote: (req: Request, res: Response) => Promise<void>;
+  getVoteStatus: (req: Request, res: Response) => Promise<void>;
+  getAllVoteStatuses: (req: Request, res: Response) => Promise<void>;
 }
 
 const voteControllers: VoteControllers = {
@@ -275,6 +279,72 @@ const voteControllers: VoteControllers = {
         data: null,
         error: {
           message: "獲取投票結果時發生錯誤",
+          details: (error as Error).message,
+        },
+      });
+    }
+  },
+
+  // 獲取投票狀態
+  getVoteStatus: async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({
+        success: false,
+        data: null,
+        error: {
+          message: "缺少必要參數",
+          details: "投票ID是必須的",
+        },
+      });
+      return;
+    }
+
+    try {
+      const status = await getVoteStatus(id);
+      res.status(200).json({
+        success: true,
+        data: { status },
+        message: "投票狀態獲取成功",
+      });
+    } catch (error) {
+      console.error("獲取投票狀態時發生錯誤:", error);
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          message: "獲取投票狀態時發生錯誤",
+          details: (error as Error).message,
+        },
+      });
+    }
+  },
+
+  // 獲取所有投票的狀態
+  getAllVoteStatuses: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const voteIds = await getAllVoteIds();
+      
+      const statusPromises = voteIds.map(async (id) => {
+        const status = await getVoteStatus(id.toString());
+        return { id, status };
+      });
+
+      const statuses = await Promise.all(statusPromises);
+
+      res.status(200).json({
+        success: true,
+        data: { statuses },
+        message: "所有投票狀態獲取成功",
+      });
+    } catch (error) {
+      console.error("獲取所有投票狀態時發生錯誤:", error);
+      res.status(500).json({
+        success: false,
+        data: null,
+        error: {
+          message: "獲取所有投票狀態時發生錯誤",
           details: (error as Error).message,
         },
       });

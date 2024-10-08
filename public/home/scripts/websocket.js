@@ -18,7 +18,6 @@ socket.on("statusUpdated", (data) => {
   console.log("收到投票狀態更新:", data);
 
   if (data.voteId && data.status !== undefined) {
-    localStorage.setItem(`voteStatus_${data.voteId}`, data.status.toString());
     updateVoteStatus(data.voteId, data.status);
   }
 });

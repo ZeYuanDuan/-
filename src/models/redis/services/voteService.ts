@@ -113,7 +113,7 @@ export async function updateVoteStatus(
   await redisClient.set(statusKey, statusValue);
 }
 
-// 新增創建臨時響應鍵的方法
+// 創建臨時響應鍵的方法
 export async function createTempResponseKey(voteId: string): Promise<void> {
   const tempResponseKey = REDIS_KEYS.voteTempResponse(voteId);
   await redisClient.del(tempResponseKey);
@@ -155,4 +155,11 @@ export async function extractTempResponses(
       votedAt,
     };
   });
+}
+
+// 獲取投票狀態的方法
+export async function getVoteStatus(voteId: string): Promise<boolean> {
+  const statusKey = REDIS_KEYS.voteStatus(voteId);
+  const status = await redisClient.get(statusKey);
+  return status === "1";
 }

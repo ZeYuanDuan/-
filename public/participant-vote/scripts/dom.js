@@ -63,7 +63,7 @@ function createVoteButton(voteId, optionId) {
   return voteButton;
 }
 
-function getVoterName() {
+export function getVoterName() {
   const name = localStorage.getItem("voterName");
   if (!name) {
     throw new Error("未提供參與者名稱");

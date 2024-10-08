@@ -2,12 +2,21 @@
 import { submitVote, sendVotingStatusUpdate } from "./websocket.js";
 
 const voterName = "主持人";
-let isVotingActive = false;
+let isVotingActive;
 let voteId;
 
 window.onload = function () {
   const urlParams = new URLSearchParams(window.location.search);
   voteId = urlParams.get("voteId");
+
+  // 從 localStorage 取得投票狀態
+  const storedVotingStatus = localStorage.getItem(`voteStatus_${voteId}`);
+  if (storedVotingStatus !== null) {
+    isVotingActive = storedVotingStatus === 'true';
+  } else {
+    isVotingActive = false;
+    localStorage.setItem(`voteStatus_${voteId}`, isVotingActive);
+  }
 
   const newUrl = `http://127.0.0.1:5500/public/participant/participant.html?voteId=${voteId}`;
 
@@ -27,7 +36,7 @@ window.onload = function () {
   toggleButton.addEventListener("click", toggleVotingStatus);
 
   const qrcodeElement = document.getElementById("qrcode");
-  qrcodeElement.style.display = "none";
+  qrcodeElement.style.display = isVotingActive ? "block" : "none";
 
   updateButtonVisibility();
 };
@@ -51,6 +60,9 @@ function toggleVotingStatus() {
   }
 
   updateButtonVisibility();
+
+  // 將最新的投票狀態存入 localStorage
+  localStorage.setItem(`voteStatus_${voteId}`, isVotingActive);
 
   // 利用 WebSocket 發送投票狀態更新至伺服器
   sendVotingStatusUpdate(voteId, isVotingActive);

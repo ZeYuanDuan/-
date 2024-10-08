@@ -17,4 +17,6 @@ router.put("/:id", voteControllers.updateVote);
 
 router.delete("/:id", voteControllers.deleteVote);
 
+router.get("/:id/status", voteControllers.getVoteStatus);
+
 export default router;

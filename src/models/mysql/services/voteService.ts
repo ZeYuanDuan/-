@@ -28,6 +28,12 @@ interface ExtractedResponse {
   votedAt: string;
 }
 
+export async function getAllVoteIds(): Promise<number[]> {
+  const query = "SELECT id FROM votes";
+  const results = await executeQuery<{ id: number }>(query);
+  return results.map((result) => result.id);
+}
+
 export async function getAllVotesFromMysql(): Promise<VoteData[]> {
   const votesQuery = `
     SELECT v.id, v.title, v.description, 
@@ -67,7 +73,10 @@ export async function getVoteDataFromMysql(
     description: string;
     created_at: string;
     updated_at: string;
-  }>("SELECT title, description, created_at, updated_at FROM votes WHERE id = ?", [voteId]);
+  }>(
+    "SELECT title, description, created_at, updated_at FROM votes WHERE id = ?",
+    [voteId]
+  );
 
   if (voteRows.length === 0) {
     return null;
@@ -145,7 +154,9 @@ export async function deleteVoteFromMysql(voteId: number): Promise<boolean> {
     await connection.beginTransaction();
 
     // 刪除相關的投票選項
-    await connection.query("DELETE FROM vote_options WHERE vote_id = ?", [voteId]);
+    await connection.query("DELETE FROM vote_options WHERE vote_id = ?", [
+      voteId,
+    ]);
 
     // 刪除投票
     const [result] = await connection.query<ResultSetHeader>(
@@ -168,7 +179,11 @@ export async function deleteVoteFromMysql(voteId: number): Promise<boolean> {
   }
 }
 
-export async function createVoteInMysql(title: string, description: string, options: string[]): Promise<VoteData> {
+export async function createVoteInMysql(
+  title: string,
+  description: string,
+  options: string[]
+): Promise<VoteData> {
   let connection: PoolConnection | null = null;
   try {
     connection = await getConnection();
@@ -193,7 +208,7 @@ export async function createVoteInMysql(title: string, description: string, opti
         id: insertResult.insertId,
         name: option,
         votes: 0,
-        percentage: "0%"
+        percentage: "0%",
       });
     }
 
@@ -206,7 +221,7 @@ export async function createVoteInMysql(title: string, description: string, opti
       created_at: now,
       updated_at: now,
       totalVotes: 0,
-      options: insertedOptions
+      options: insertedOptions,
     };
   } catch (error) {
     if (connection) await connection.rollback();
@@ -216,7 +231,12 @@ export async function createVoteInMysql(title: string, description: string, opti
   }
 }
 
-export async function updateVoteInMysql(id: number, title: string, description: string, options: string[]): Promise<VoteData | null> {
+export async function updateVoteInMysql(
+  id: number,
+  title: string,
+  description: string,
+  options: string[]
+): Promise<VoteData | null> {
   let connection: PoolConnection | null = null;
   try {
     connection = await getConnection();
@@ -260,7 +280,7 @@ export async function updateVoteInMysql(id: number, title: string, description: 
         id: insertResult.insertId,
         name: option,
         votes: 0,
-        percentage: "0%"
+        percentage: "0%",
       });
     }
 
@@ -273,7 +293,7 @@ export async function updateVoteInMysql(id: number, title: string, description: 
       updated_at: now,
       created_at: originalCreatedAt,
       totalVotes: 0,
-      options: insertedOptions
+      options: insertedOptions,
     };
   } catch (error) {
     if (connection) await connection.rollback();
@@ -283,7 +303,10 @@ export async function updateVoteInMysql(id: number, title: string, description: 
   }
 }
 
-export async function saveExtractedResponsesToMysql(voteId: number, extractedResponses: ExtractedResponse[]): Promise<void> {
+export async function saveExtractedResponsesToMysql(
+  voteId: number,
+  extractedResponses: ExtractedResponse[]
+): Promise<void> {
   let connection: PoolConnection | null = null;
   try {
     connection = await getConnection();
@@ -299,7 +322,7 @@ export async function saveExtractedResponsesToMysql(voteId: number, extractedRes
         voteId,
         response.optionId,
         response.encodedVoterName,
-        response.votedAt
+        response.votedAt,
       ]);
     }
 
@@ -307,7 +330,7 @@ export async function saveExtractedResponsesToMysql(voteId: number, extractedRes
     console.log(`成功將 ${extractedResponses.length} 條投票響應保存到 MySQL`);
   } catch (error) {
     if (connection) await connection.rollback();
-    console.error('保存提取的響應到 MySQL 時出錯:', error);
+    console.error("保存提取的響應到 MySQL 時出錯:", error);
     throw error;
   } finally {
     if (connection) releaseConnection(connection);

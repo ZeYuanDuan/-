@@ -81,7 +81,7 @@ function createVoteRow(vote, index) {
   `;
 }
 
-// 添加時區轉換函數
+// 時區轉換函數
 function convertToLocalTime(utcTimeString, dateTimeFormat, timeZone) {
   const date = new Date(utcTimeString);
 
@@ -150,10 +150,10 @@ export function updateVoteStatus(voteId, status) {
   }
 }
 
-document.getElementById('voteList').addEventListener('click', function(event) {
-  if (event.target.closest('.delete-vote-btn')) {
-    const button = event.target.closest('.delete-vote-btn');
-    const voteId = button.closest('tr').dataset.voteId;
+document.getElementById("voteList").addEventListener("click", function (event) {
+  if (event.target.closest(".delete-vote-btn")) {
+    const button = event.target.closest(".delete-vote-btn");
+    const voteId = button.closest("tr").dataset.voteId;
     deleteVote(voteId);
   }
 });

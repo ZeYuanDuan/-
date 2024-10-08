@@ -1,13 +1,13 @@
 // 應用程序入口
 import { fetchVoteResult } from "./api.js";
-import { updateVoteDisplay } from "./dom.js";
+import { renderVoteDisplay } from "./dom.js";
 import { initializeWebSocket } from "./websocket.js";
 
 async function initialize() {
   try {
     const voteId = getVoteId();
     const vote = await fetchVoteResult(voteId);
-    updateVoteDisplay(vote);
+    renderVoteDisplay(vote);
     initializeWebSocket(voteId);
   } catch (error) {
     displayError(error.message);
@@ -26,14 +26,6 @@ function getVoteId() {
     throw new Error("未提供投票 ID");
   }
   return id;
-}
-
-export function getVoterName() {
-  const name = localStorage.getItem("voterName");
-  if (!name) {
-    throw new Error("未提供參與者名稱");
-  }
-  return name;
 }
 
 initialize();

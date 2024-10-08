@@ -1,8 +1,7 @@
 // 處理 DOM 操作
 import { submitVote, sendVotingStatusUpdate } from "./websocket.js";
 
-const voterName = "測試用戶"; // TODO 替換為實際的用戶名
-
+const voterName = "主持人";
 let isVotingActive = false;
 let voteId;
 
@@ -26,46 +25,46 @@ window.onload = function () {
 
   const toggleButton = document.getElementById("toggleButton");
   toggleButton.addEventListener("click", toggleVotingStatus);
+
+  const qrcodeElement = document.getElementById("qrcode");
+  qrcodeElement.style.display = "none";
+
+  updateButtonVisibility();
 };
 
-export function updateVoteDisplay(vote) {
-  updateVoteInfo(vote);
-  updateOptions(vote);
+// ============================ 切換投票狀態 ============================
+function toggleVotingStatus() {
+  isVotingActive = !isVotingActive;
+  const toggleButton = document.getElementById("toggleButton");
+  const qrcodeElement = document.getElementById("qrcode");
+
+  if (isVotingActive) {
+    toggleButton.textContent = "結束";
+    toggleButton.classList.remove("btn-success");
+    toggleButton.classList.add("btn-danger");
+    qrcodeElement.style.display = "block";
+  } else {
+    toggleButton.textContent = "開始";
+    toggleButton.classList.remove("btn-danger");
+    toggleButton.classList.add("btn-success");
+    qrcodeElement.style.display = "none";
+  }
+
+  updateButtonVisibility();
+
+  // 利用 WebSocket 發送投票狀態更新至伺服器
+  sendVotingStatusUpdate(voteId, isVotingActive);
+}
+// ============================ 切換投票狀態 ============================
+
+// ============================ 渲染投票顯示 ============================
+export function renderVoteDisplay(vote) {
+  renderVoteInfo(vote);
+  renderOptions(vote);
+  updateButtonVisibility();
 }
 
-export function updateVoteCounts(vote) {
-  document.getElementById(
-    "totalVotes"
-  ).textContent = `總票數: ${vote.totalVotes}`;
-  vote.options.forEach((option) => {
-    const optionElement = document.getElementById(`option-${option.id}`);
-    if (optionElement) {
-      // 更新進度條
-      const progressContainer = optionElement.querySelector(".d-flex");
-      if (progressContainer) {
-        progressContainer.innerHTML = `
-          <div class="progress flex-grow-1 mr-2">
-            <div 
-              class="progress-bar" 
-              role="progressbar" 
-              style="width: ${option.percentage}">
-              ${option.votes} 票
-            </div>
-          </div>
-          <span class="text-muted">${option.percentage}</span>
-        `;
-      }
-
-      let voteButton = optionElement.querySelector("button");
-      if (!voteButton) {
-        voteButton = createVoteButton(vote.id, option.id);
-        optionElement.querySelector(".card-body").appendChild(voteButton);
-      }
-    }
-  });
-}
-
-function updateVoteInfo(vote) {
+function renderVoteInfo(vote) {
   document.getElementById("voteTitle").textContent = vote.title;
   document.getElementById("voteDescription").textContent = vote.description;
   document.getElementById(
@@ -73,7 +72,7 @@ function updateVoteInfo(vote) {
   ).textContent = `總票數: ${vote.totalVotes}`;
 }
 
-function updateOptions(vote) {
+function renderOptions(vote) {
   const voteId = vote.id;
   const options = vote.options;
   const optionsContainer = document.getElementById("voteOptions");
@@ -118,23 +117,45 @@ function createVoteButton(voteId, optionId) {
   voteButton.className = "btn btn-primary btn-circle btn-sm";
   voteButton.textContent = "投票";
   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
+  voteButton.style.display = "none"; // 初始時隱藏按鈕
   return voteButton;
 }
 
-function toggleVotingStatus() {
-  isVotingActive = !isVotingActive;
-  const toggleButton = document.getElementById("toggleButton");
+function updateButtonVisibility() {
+  const voteButtons = document.querySelectorAll(".btn-circle.btn-sm");
+  voteButtons.forEach(button => {
+    button.style.display = isVotingActive ? "inline-block" : "none";
+  });
+}
 
-  if (isVotingActive) {
-    toggleButton.textContent = "結束";
-    toggleButton.classList.remove("btn-success");
-    toggleButton.classList.add("btn-danger");
-  } else {
-    toggleButton.textContent = "開始";
-    toggleButton.classList.remove("btn-danger");
-    toggleButton.classList.add("btn-success");
-  }
+export function renderVoteCounts(vote) {
+  document.getElementById(
+    "totalVotes"
+  ).textContent = `總票數: ${vote.totalVotes}`;
+  vote.options.forEach((option) => {
+    const optionElement = document.getElementById(`option-${option.id}`);
+    if (optionElement) {
+      // 更新進度條
+      const progressContainer = optionElement.querySelector(".d-flex");
+      if (progressContainer) {
+        progressContainer.innerHTML = `
+          <div class="progress flex-grow-1 mr-2">
+            <div 
+              class="progress-bar" 
+              role="progressbar" 
+              style="width: ${option.percentage}">
+              ${option.votes} 票
+            </div>
+          </div>
+          <span class="text-muted">${option.percentage}</span>
+        `;
+      }
 
-  // ! 利用 WebSocket 發送投票狀態更新至伺服器
-  sendVotingStatusUpdate(voteId, isVotingActive);
+      let voteButton = optionElement.querySelector("button");
+      if (!voteButton) {
+        voteButton = createVoteButton(vote.id, option.id);
+        optionElement.querySelector(".card-body").appendChild(voteButton);
+      }
+    }
+  });
 }

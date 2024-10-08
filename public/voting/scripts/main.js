@@ -1,15 +1,13 @@
 // 應用程序入口
 import { fetchVoteResult } from "./api.js";
-import { updateVoteDisplay } from "./dom.js";
+import { renderVoteDisplay } from "./dom.js";
 import { initializeWebSocket } from "./websocket.js";
-
-const voterName = "測試用戶";
 
 async function initialize() {
   try {
     const voteId = getVoteId();
     const vote = await fetchVoteResult(voteId);
-    updateVoteDisplay(vote);
+    renderVoteDisplay(vote);
     initializeWebSocket(voteId);
   } catch (error) {
     displayError(error.message);

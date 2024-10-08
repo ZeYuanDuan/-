@@ -1,5 +1,5 @@
 // 處理 WebSocket 連接
-import { updateVoteCounts } from "./dom.js";
+import { renderVoteCounts } from "./dom.js";
 
 let socket;
 
@@ -12,7 +12,7 @@ export function initializeWebSocket(voteId) {
 
   socket.on(`voteResult:${voteId}`, (data) => {
     if (data.success) {
-      updateVoteCounts(data.data.vote); // 更新票數
+      renderVoteCounts(data.data.vote); // 更新票數
     } else {
       console.error("獲取投票結果失敗:", data.error);
     }

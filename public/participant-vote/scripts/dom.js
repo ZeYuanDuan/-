@@ -1,45 +1,12 @@
 // 處理 DOM 操作
 import { submitVote } from "./websocket.js";
-import { getVoterName } from "./main.js";
 
-export function updateVoteDisplay(vote) {
-  updateVoteInfo(vote);
-  updateOptions(vote);
+export function renderVoteDisplay(vote) {
+  renderVoteInfo(vote);
+  renderOptions(vote);
 }
 
-export function updateVoteCounts(vote) {
-  document.getElementById(
-    "totalVotes"
-  ).textContent = `總票數: ${vote.totalVotes}`;
-  vote.options.forEach((option) => {
-    const optionElement = document.getElementById(`option-${option.id}`);
-    if (optionElement) {
-      // 更新進度條
-      const progressContainer = optionElement.querySelector(".d-flex");
-      if (progressContainer) {
-        progressContainer.innerHTML = `
-          <div class="progress flex-grow-1 mr-2">
-            <div 
-              class="progress-bar" 
-              role="progressbar" 
-              style="width: ${option.percentage}">
-              ${option.votes} 票
-            </div>
-          </div>
-          <span class="text-muted">${option.percentage}</span>
-        `;
-      }
-
-      let voteButton = optionElement.querySelector("button");
-      if (!voteButton) {
-        voteButton = createVoteButton(vote.id, option.id);
-        optionElement.querySelector(".card-body").appendChild(voteButton);
-      }
-    }
-  });
-}
-
-function updateVoteInfo(vote) {
+function renderVoteInfo(vote) {
   document.getElementById("voteTitle").textContent = vote.title;
   document.getElementById("voteDescription").textContent = vote.description;
   document.getElementById(
@@ -47,7 +14,7 @@ function updateVoteInfo(vote) {
   ).textContent = `總票數: ${vote.totalVotes}`;
 }
 
-function updateOptions(vote) {
+function renderOptions(vote) {
   const voteId = vote.id;
   const options = vote.options;
   const optionsContainer = document.getElementById("voteOptions");
@@ -94,4 +61,44 @@ function createVoteButton(voteId, optionId) {
   const voterName = getVoterName();
   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
   return voteButton;
+}
+
+function getVoterName() {
+  const name = localStorage.getItem("voterName");
+  if (!name) {
+    throw new Error("未提供參與者名稱");
+  }
+  return name;
+}
+
+export function renderVoteCounts(vote) {
+  document.getElementById(
+    "totalVotes"
+  ).textContent = `總票數: ${vote.totalVotes}`;
+  vote.options.forEach((option) => {
+    const optionElement = document.getElementById(`option-${option.id}`);
+    if (optionElement) {
+      // 更新進度條
+      const progressContainer = optionElement.querySelector(".d-flex");
+      if (progressContainer) {
+        progressContainer.innerHTML = `
+          <div class="progress flex-grow-1 mr-2">
+            <div 
+              class="progress-bar" 
+              role="progressbar" 
+              style="width: ${option.percentage}">
+              ${option.votes} 票
+            </div>
+          </div>
+          <span class="text-muted">${option.percentage}</span>
+        `;
+      }
+
+      let voteButton = optionElement.querySelector("button");
+      if (!voteButton) {
+        voteButton = createVoteButton(vote.id, option.id);
+        optionElement.querySelector(".card-body").appendChild(voteButton);
+      }
+    }
+  });
 }

@@ -86,8 +86,8 @@ export async function deleteVoteFromRedis(voteId: string): Promise<void> {
   const multi = redisClient.multi();
 
   multi.del(REDIS_KEYS.voteOptions(voteId));
-
   multi.del(REDIS_KEYS.voteResponse(voteId));
+  multi.del(REDIS_KEYS.voteTempResponse(voteId));
 
   for (const optionId of optionIds) {
     multi.del(REDIS_KEYS.voteOption(voteId, optionId));

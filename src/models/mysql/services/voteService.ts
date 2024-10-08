@@ -22,6 +22,12 @@ interface VoteData {
   }[];
 }
 
+interface ExtractedResponse {
+  optionId: number;
+  encodedVoterName: string;
+  votedAt: string;
+}
+
 export async function getAllVotesFromMysql(): Promise<VoteData[]> {
   const votesQuery = `
     SELECT v.id, v.title, v.description, 
@@ -271,6 +277,37 @@ export async function updateVoteInMysql(id: number, title: string, description: 
     };
   } catch (error) {
     if (connection) await connection.rollback();
+    throw error;
+  } finally {
+    if (connection) releaseConnection(connection);
+  }
+}
+
+export async function saveExtractedResponsesToMysql(voteId: number, extractedResponses: ExtractedResponse[]): Promise<void> {
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    const insertQuery = `
+      INSERT INTO vote_responses (vote_id, option_id, voter_name, voted_at)
+      VALUES (?, ?, ?, ?)
+    `;
+
+    for (const response of extractedResponses) {
+      await connection.query(insertQuery, [
+        voteId,
+        response.optionId,
+        response.encodedVoterName,
+        response.votedAt
+      ]);
+    }
+
+    await connection.commit();
+    console.log(`成功將 ${extractedResponses.length} 條投票響應保存到 MySQL`);
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error('保存提取的響應到 MySQL 時出錯:', error);
     throw error;
   } finally {
     if (connection) releaseConnection(connection);

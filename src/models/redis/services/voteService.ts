@@ -142,7 +142,7 @@ export async function transferTempResponseToResponse(
 export async function extractTempResponses(
   voteId: string
 ): Promise<
-  Array<{ encodedVoterName: string; optionId: string; votedAt: string }>
+  Array<{ encodedVoterName: string; optionId: number; votedAt: string }>
 > {
   const tempResponseKey = REDIS_KEYS.voteTempResponse(voteId);
   const responses = await redisClient.lrange(tempResponseKey, 0, -1);
@@ -151,7 +151,7 @@ export async function extractTempResponses(
     const [encodedVoterName, optionId, votedAt] = response.split("::");
     return {
       encodedVoterName,
-      optionId,
+      optionId: parseInt(optionId, 10),
       votedAt,
     };
   });

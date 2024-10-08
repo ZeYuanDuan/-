@@ -5,12 +5,16 @@ import {
   deleteVoteFromMysql,
   createVoteInMysql,
   updateVoteInMysql,
+  getAllVoteIds,
 } from "../models/mysql/services/voteService";
-import { syncVoteDataToRedis } from "../models/redis/services/voteService";
+
+import {
+  syncVoteDataToRedis,
+  deleteVoteFromRedis,
+  getVoteStatus,
+} from "../models/redis/services/voteService";
+
 import { storeVoteDataToRedis } from "../infrastructure/consumer/modules/storeVoteDataToRedis";
-import { deleteVoteFromRedis } from "../models/redis/services/voteService";
-import { getVoteStatus } from "../models/redis/services/voteService";
-import { getAllVoteIds } from "../models/mysql/services/voteService";
 
 interface VoteControllers {
   getVotes: (req: Request, res: Response) => Promise<void>;
@@ -325,7 +329,7 @@ const voteControllers: VoteControllers = {
   getAllVoteStatuses: async (req: Request, res: Response): Promise<void> => {
     try {
       const voteIds = await getAllVoteIds();
-      
+
       const statusPromises = voteIds.map(async (id) => {
         const status = await getVoteStatus(id.toString());
         return { id, status };

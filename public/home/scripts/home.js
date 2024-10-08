@@ -1,42 +1,48 @@
 import { API_BASE_URL, DATE_TIME_FORMAT, TIME_ZONE } from "./config.js";
 
-document.addEventListener("DOMContentLoaded", updateVoteList);
+let voteData = {}; // 將 voteData 改為物件
 
-async function updateVoteList() {
+document.addEventListener("DOMContentLoaded", initializeVoteList);
+
+async function initializeVoteList() {
+  try {
+    const [votesResponse, statusesResponse] = await Promise.all([
+      axios.get(`${API_BASE_URL}/vote`),
+      axios.get(`${API_BASE_URL}/vote/statuses`),
+    ]);
+
+    const votes = votesResponse.data.data.votes;
+    const statuses = statusesResponse.data.data.statuses;
+
+    // 合併投票數據和狀態
+    votes.forEach((vote) => {
+      const status = statuses.find((s) => s.id === vote.id)?.status || false;
+      voteData[vote.id] = { ...vote, status };
+    });
+
+    updateVoteList();
+  } catch (error) {
+    console.error("初始化投票列表時發生錯誤:", error);
+  }
+}
+
+function updateVoteList() {
   const voteList = document.getElementById("voteList");
-  const votes = await fetchVotes();
 
-  if (votes.length === 0) {
+  if (Object.keys(voteData).length === 0) {
     voteList.innerHTML =
       '<tr><td colspan="5" class="text-center">暫無投票</td></tr>';
   } else {
-    voteList.innerHTML = votes
+    voteList.innerHTML = Object.values(voteData)
       .map((vote, index) => createVoteRow(vote, index + 1))
       .join("");
   }
 }
 
-async function fetchVotes() {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/vote`);
-    if (response.data && response.data.success) {
-      return response.data.data.votes;
-    } else {
-      throw new Error(response.data.message || "獲取投票列表失敗");
-    }
-  } catch (error) {
-    console.error("獲取投票列表時發生錯誤:", error);
-    return [];
-  }
-}
-
-// ! 目前資料庫存的 UTC 時間還是錯的，還沒找到修正方法
 function createVoteRow(vote, index) {
-  const voteStatus = localStorage.getItem(`voteStatus_${vote.id}`);
-  const status = voteStatus === "true" ? "進行中" : "未進行";
-  const statusClass = voteStatus === "true" ? "text-success" : "text-danger";
-  const statusIcon =
-    voteStatus === "true" ? "fa-play-circle" : "fa-stop-circle";
+  const statusClass = vote.status ? "text-success" : "text-danger";
+  const statusIcon = vote.status ? "fa-play-circle" : "fa-stop-circle";
+  const status = vote.status ? "進行中" : "未進行";
 
   return `
     <tr data-vote-id="${vote.id}">
@@ -47,7 +53,7 @@ function createVoteRow(vote, index) {
         DATE_TIME_FORMAT,
         TIME_ZONE
       )}</td>
-      <td class="vote-information ${statusClass}">
+      <td class="vote-information vote-status ${statusClass}">
         <i class="fas ${statusIcon}"></i> <span class="font-weight-bold">${status}</span>
       </td>
       <td class="vote-information">
@@ -71,14 +77,33 @@ function createVoteRow(vote, index) {
         ${vote.description || "----- 無描述 -----"}
       </td>
     </tr>
-    <tr class="vote-json" data-vote-id="${vote.id}">
-      <td colspan="5">
-        <pre>
-          ${JSON.stringify(vote, null, 2)}
-        </pre>
-      </td>
-    </tr>
+  <!-- 測試用代碼開始 -->
+  <tr class="vote-debug" data-vote-id="${vote.id}">
+    <td colspan="5">
+      <pre>${JSON.stringify(voteData[vote.id], null, 2)}</pre>
+    </td>
+  </tr>
+  <!-- 測試用代碼結束 -->
   `;
+}
+
+export function updateVoteStatus(voteId, status) {
+  const voteKey = String(voteId);
+  if (!voteData.hasOwnProperty(voteKey)) return;
+
+  voteData[voteKey].status = status;
+
+  const statusCell = document.querySelector(
+    `tr[data-vote-id="${voteId}"] td.vote-status`
+  );
+  if (!statusCell) return;
+
+  const statusClass = status ? "text-success" : "text-danger";
+  const statusIcon = status ? "fa-play-circle" : "fa-stop-circle";
+  const statusText = status ? "進行中" : "未進行";
+
+  statusCell.className = `vote-information vote-status ${statusClass}`;
+  statusCell.innerHTML = `<i class="fas ${statusIcon}"></i> <span class="font-weight-bold">${statusText}</span>`;
 }
 
 // 時區轉換函數
@@ -109,6 +134,11 @@ function deleteVote(voteId) {
       const data = response.data;
       if (data.success) {
         alert("投票刪除成功");
+        // 從物件中移除對應的投票項目
+        const voteKey = String(voteId);
+        if (voteData.hasOwnProperty(voteKey)) {
+          delete voteData[voteKey];
+        }
         updateVoteList();
       } else {
         alert(`刪除失敗: ${data.error.message}`);
@@ -118,36 +148,6 @@ function deleteVote(voteId) {
       console.error("刪除投票時發生錯誤:", error);
       alert("刪除投票時發生錯誤");
     });
-}
-
-// ! 測試用 HTML，顯示前端收到的 JSON 資料
-{
-  /* <tr>
-  <td colspan="5">
-    <pre>
-      $
-      {JSON.stringify(
-        { ...vote, created_at: convertToLocalTime(vote.created_at) },
-        null,
-        2
-      )}
-    </pre>
-  </td>
-</tr>; */
-}
-
-export function updateVoteStatus(voteId, status) {
-  const statusCell = document.querySelector(
-    `tr[data-vote-id="${voteId}"] td:nth-child(4)`
-  );
-  if (statusCell) {
-    const statusClass = status ? "text-success" : "text-danger";
-    const statusIcon = status ? "fa-play-circle" : "fa-stop-circle";
-    const statusText = status ? "進行中" : "未進行";
-
-    statusCell.className = `vote-information ${statusClass}`;
-    statusCell.innerHTML = `<i class="fas ${statusIcon}"></i> <span class="font-weight-bold">${statusText}</span>`;
-  }
 }
 
 document.getElementById("voteList").addEventListener("click", function (event) {

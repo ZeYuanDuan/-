@@ -1,5 +1,4 @@
 import express from "express";
-import path from "path";
 import voteControllers from "../controllers/vote-controllers";
 
 const router = express.Router();
@@ -11,12 +10,14 @@ router.post("/", voteControllers.createVote);
 
 router.post("/:id", voteControllers.voteForTopic); // ? 這是幹嘛用的？？？
 
+router.get("/statuses", voteControllers.getAllVoteStatuses);
+
 router.get("/:id", voteControllers.getVoteResult);
+
+router.get("/:id/status", voteControllers.getVoteStatus);
 
 router.put("/:id", voteControllers.updateVote);
 
 router.delete("/:id", voteControllers.deleteVote);
-
-router.get("/:id/status", voteControllers.getVoteStatus);
 
 export default router;

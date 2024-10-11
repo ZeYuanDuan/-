@@ -1,13 +1,14 @@
 // 應用程序入口
-import { fetchVoteResult } from "./api.js";
+import { fetchVoteDataWithStatus } from "./api.js";
 import { renderVoteDisplay } from "./dom.js";
 import { initializeWebSocket } from "./websocket.js";
 
 async function initialize() {
   try {
     const voteId = getVoteId();
-    const vote = await fetchVoteResult(voteId);
-    renderVoteDisplay(vote);
+    const voteData = await fetchVoteDataWithStatus(voteId);
+    console.log("投票數據:", JSON.stringify(voteData, null, 2));
+    renderVoteDisplay(voteData);
     initializeWebSocket(voteId);
   } catch (error) {
     displayError(error.message);

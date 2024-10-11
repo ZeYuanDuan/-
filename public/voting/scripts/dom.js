@@ -5,19 +5,59 @@ const voterName = "主持人";
 let isVotingActive;
 let voteId;
 
-window.onload = function () {
-  const urlParams = new URLSearchParams(window.location.search);
-  voteId = urlParams.get("voteId");
+// ============================ 根據投票狀態更新 UI ============================
+export function updateUIBasedOnVotingStatus(isActive) {
+  isVotingActive = isActive; // 將投票狀態更新至全域變數
 
-  // 從 localStorage 取得投票狀態
-  const storedVotingStatus = localStorage.getItem(`voteStatus_${voteId}`);
-  if (storedVotingStatus !== null) {
-    isVotingActive = storedVotingStatus === 'true';
+  const qrcodeElement = document.getElementById("qrcode");
+  const toggleButton = document.getElementById("toggleButton");
+  const voteButtons = document.querySelectorAll(".btn-circle.btn-sm");
+
+  // 更新 QR 碼顯示
+  qrcodeElement.style.display = isActive ? "block" : "none";
+
+  // 更新切換按鈕
+  if (isActive) {
+    toggleButton.textContent = "結束";
+    toggleButton.classList.remove("btn-success");
+    toggleButton.classList.add("btn-danger");
   } else {
-    isVotingActive = false;
-    localStorage.setItem(`voteStatus_${voteId}`, isVotingActive);
+    toggleButton.textContent = "開始";
+    toggleButton.classList.remove("btn-danger");
+    toggleButton.classList.add("btn-success");
   }
 
+  // 更新投票按鈕顯示
+  voteButtons.forEach((button) => {
+    button.style.display = isActive ? "inline-block" : "none";
+  });
+}
+// ========
+
+// ============================ 切換投票狀態 ============================
+function toggleVotingStatus() {
+  isVotingActive = !isVotingActive;
+  updateUIBasedOnVotingStatus(isVotingActive);
+
+  // 利用 WebSocket 發送投票狀態更新至伺服器
+  sendVotingStatusUpdate(voteId, isVotingActive);
+}
+// ============================ 切換投票狀態 ============================
+
+// ============================ 渲染投票顯示 ============================
+export function renderVoteDisplay(vote) {
+  voteId = vote.id;
+
+  setupQRCodeAndParticipantLink(voteId);
+  setupToggleButton();
+
+  renderVoteInfo(vote);
+  renderOptions(vote);
+
+  updateUIBasedOnVotingStatus(vote.status);
+}
+
+function setupQRCodeAndParticipantLink(voteId) {
   const newUrl = `http://127.0.0.1:5500/public/participant/participant.html?voteId=${voteId}`;
 
   new QRCode(document.getElementById("qrcode"), {
@@ -31,49 +71,11 @@ window.onload = function () {
   participantLink.textContent = "參與者投票頁面";
 
   document.getElementById("qrcode").appendChild(participantLink);
+}
 
+function setupToggleButton() {
   const toggleButton = document.getElementById("toggleButton");
   toggleButton.addEventListener("click", toggleVotingStatus);
-
-  const qrcodeElement = document.getElementById("qrcode");
-  qrcodeElement.style.display = isVotingActive ? "block" : "none";
-
-  updateButtonVisibility();
-};
-
-// ============================ 切換投票狀態 ============================
-function toggleVotingStatus() {
-  isVotingActive = !isVotingActive;
-  const toggleButton = document.getElementById("toggleButton");
-  const qrcodeElement = document.getElementById("qrcode");
-
-  if (isVotingActive) {
-    toggleButton.textContent = "結束";
-    toggleButton.classList.remove("btn-success");
-    toggleButton.classList.add("btn-danger");
-    qrcodeElement.style.display = "block";
-  } else {
-    toggleButton.textContent = "開始";
-    toggleButton.classList.remove("btn-danger");
-    toggleButton.classList.add("btn-success");
-    qrcodeElement.style.display = "none";
-  }
-
-  updateButtonVisibility();
-
-  // 將最新的投票狀態存入 localStorage
-  localStorage.setItem(`voteStatus_${voteId}`, isVotingActive);
-
-  // 利用 WebSocket 發送投票狀態更新至伺服器
-  sendVotingStatusUpdate(voteId, isVotingActive);
-}
-// ============================ 切換投票狀態 ============================
-
-// ============================ 渲染投票顯示 ============================
-export function renderVoteDisplay(vote) {
-  renderVoteInfo(vote);
-  renderOptions(vote);
-  updateButtonVisibility();
 }
 
 function renderVoteInfo(vote) {
@@ -129,15 +131,7 @@ function createVoteButton(voteId, optionId) {
   voteButton.className = "btn btn-primary btn-circle btn-sm";
   voteButton.textContent = "投票";
   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
-  voteButton.style.display = "none"; // 初始時隱藏按鈕
   return voteButton;
-}
-
-function updateButtonVisibility() {
-  const voteButtons = document.querySelectorAll(".btn-circle.btn-sm");
-  voteButtons.forEach(button => {
-    button.style.display = isVotingActive ? "inline-block" : "none";
-  });
 }
 
 export function renderVoteCounts(vote) {

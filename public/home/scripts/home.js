@@ -1,4 +1,5 @@
 import { API_BASE_URL, DATE_TIME_FORMAT, TIME_ZONE } from "./config.js";
+import { fetchVotes, fetchVoteStatuses, deleteVoteById } from "./api.js";
 
 let voteData = {}; // 將 voteData 改為物件
 
@@ -6,13 +7,10 @@ document.addEventListener("DOMContentLoaded", initializeVoteList);
 
 async function initializeVoteList() {
   try {
-    const [votesResponse, statusesResponse] = await Promise.all([
-      axios.get(`${API_BASE_URL}/vote`),
-      axios.get(`${API_BASE_URL}/vote/statuses`),
+    const [votes, statuses] = await Promise.all([
+      fetchVotes(),
+      fetchVoteStatuses(),
     ]);
-
-    const votes = votesResponse.data.data.votes;
-    const statuses = statusesResponse.data.data.statuses;
 
     // 合併投票數據和狀態
     votes.forEach((vote) => {
@@ -128,10 +126,8 @@ function deleteVote(voteId) {
     return;
   }
 
-  axios
-    .delete(`${API_BASE_URL}/vote/${voteId}`)
-    .then((response) => {
-      const data = response.data;
+  deleteVoteById(voteId)
+    .then((data) => {
       if (data.success) {
         alert("投票刪除成功");
         // 從物件中移除對應的投票項目

@@ -1,5 +1,6 @@
 // 處理 WebSocket 連接
 import { renderVoteCounts } from "./dom.js";
+import { updateUIBasedOnVotingStatus } from "./dom.js";
 
 let socket;
 
@@ -28,6 +29,7 @@ export function initializeWebSocket(voteId) {
 
   socket.on("statusUpdated", (data) => {
     console.log("投票狀態已更新:", data.status, "投票ID:", data.voteId);
+    updateUIBasedOnVotingStatus(data.status); // 讓所有頁面的投票狀態保持同步
   });
 }
 

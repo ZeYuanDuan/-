@@ -1,9 +1,114 @@
 // 處理 DOM 操作
 import { submitVote } from "./websocket.js";
 
+let isVotingActive;
+
+// ============================ 根據投票狀態更新 UI ============================
+function toggleElementsVisibility(isActive) {
+  const elementsToToggle = [
+    document.getElementById("voteTitle"),
+    document.getElementById("voteDescription"),
+    document.getElementById("voteOptions"),
+    document.getElementById("totalVotes"),
+    ...document.querySelectorAll(".btn-circle.btn-sm"),
+  ];
+
+  elementsToToggle.forEach((element) => {
+    if (element) {
+      element.style.display = isActive ? "" : "none";
+    }
+  });
+
+  let messageBlock = document.getElementById("noVoteMessage");
+  if (!messageBlock) {
+    messageBlock = document.createElement("p");
+    messageBlock.id = "noVoteMessage";
+    messageBlock.className = "text-center font-weight-bold my-3";
+    const voteTitleElement = document.getElementById("voteTitle");
+    voteTitleElement.parentNode.insertBefore(
+      messageBlock,
+      voteTitleElement.nextSibling
+    );
+  }
+
+  if (!isActive) {
+    messageBlock.textContent = "目前沒有任何投票正在進行";
+    messageBlock.style.display = "";
+  } else {
+    messageBlock.style.display = "none";
+    messageBlock.remove();
+  }
+}
+
+export function updateUIBasedOnVotingStatus(isActive) {
+  isVotingActive = isActive; // 將投票狀態更新至全域變數
+
+  if (isActive) {
+    toggleElementsVisibility(true);
+  } else {
+    toggleElementsVisibility(false);
+  }
+}
+// ============================ 切換投票狀態 UI ============================
+
+// ============================ 渲染投票表單============================
+export function renderVoteForm(vote) {
+  document.getElementById("voteTitle").textContent = vote.title;
+  document.getElementById("voteDescription").textContent = vote.description;
+  const voteId = vote.id;
+  const options = vote.options;
+  const formContainer = document.getElementById("voteOptions");
+  formContainer.innerHTML = "";
+
+  const form = document.createElement("form");
+  form.id = "voteForm";
+  form.className = "vote-options-container";
+
+  options.forEach((option) => {
+    const label = document.createElement("label");
+    label.className = "d-block mb-3 p-3 border rounded vote-option";
+    label.style.cursor = "pointer";
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "voteOption";
+    input.value = option.id;
+    input.id = `option-${option.id}`;
+    input.className = "mr-2";
+
+    const optionText = document.createElement("span");
+    optionText.textContent = option.name;
+    optionText.className = "ml-2 h5";
+
+    label.appendChild(input);
+    label.appendChild(optionText);
+    form.appendChild(label);
+
+    label.addEventListener("click", function () {
+      form
+        .querySelectorAll(".vote-option")
+        .forEach((opt) => opt.classList.remove("selected"));
+      this.classList.add("selected");
+    });
+  });
+
+  const submitButton = document.createElement("button");
+  submitButton.type = "submit";
+  submitButton.className = "btn btn-primary btn-lg btn-block mt-4";
+  submitButton.textContent = "提交";
+
+  form.appendChild(submitButton);
+  form.addEventListener("submit", (event) => handleFormSubmit(event, voteId));
+
+  formContainer.appendChild(form);
+}
+
+// ============================ 渲染投票表單============================
+
 export function renderVoteDisplay(vote) {
   renderVoteInfo(vote);
   renderOptions(vote);
+  updateUIBasedOnVotingStatus(vote.status);
 }
 
 function renderVoteInfo(vote) {

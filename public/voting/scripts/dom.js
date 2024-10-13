@@ -32,7 +32,7 @@ export function updateUIBasedOnVotingStatus(isActive) {
     button.style.display = isActive ? "inline-block" : "none";
   });
 }
-// ========
+// ============================ 切換投票狀態 UI ============================
 
 // ============================ 切換投票狀態 ============================
 function toggleVotingStatus() {

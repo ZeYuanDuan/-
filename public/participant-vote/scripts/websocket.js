@@ -1,6 +1,7 @@
 // 處理 WebSocket 連接
 import { renderVoteCounts } from "./dom.js";
 import { getVoterName } from "./dom.js";
+import { updateUIBasedOnVotingStatus } from "./dom.js";
 
 let socket;
 
@@ -25,6 +26,11 @@ export function initializeWebSocket(voteId) {
 
   socket.on(`voteForTopic:${voteId}:error`, (error) => {
     console.error("投票失敗:", error.error);
+  });
+
+  socket.on("statusUpdated", (data) => {
+    console.log("投票狀態已更新:", data.status, "投票ID:", data.voteId);
+    updateUIBasedOnVotingStatus(data.status); // 保持投票狀態同步
   });
 }
 

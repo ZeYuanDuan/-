@@ -1,7 +1,7 @@
 body,
 html {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 .container-fluid {
   height: 100%;
@@ -38,26 +38,19 @@ html {
 }
 
 .control-buttons {
-  position: absolute;
-  bottom: 40px;
-  left: 40px;
-  right: 40px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
 }
 
 .voting-area {
-  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   padding: 20px;
   border-left: 1px solid #dee2e6;
-  display: flex;
-  flex-direction: column;
 }
-
-/* .option-card {
-  margin-bottom: 20px;
-} */
 
 .btn-circle {
   width: 40px;
@@ -77,10 +70,72 @@ html {
   font-size: 18px;
   line-height: 1.33;
 }
+
 #toggleButton {
   width: 100%;
   padding: 10px 30px;
   font-size: 1.2rem;
   font-weight: bold;
   border-radius: 10px;
+}
+
+#statusBlock {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  font-size: 1.2rem;
+}
+
+#statusBlock i {
+  margin-right: 10px;
+}
+
+.voting-area {
+  display: flex;
+  flex-direction: column;
+}
+#voteOptions {
+  flex-grow: 1;
+}
+#totalVotes {
+  margin-top: auto;
+}
+
+/* 投票表單 */
+#voteForm input[type="radio"]:checked + span {
+  font-weight: bold;
+}
+#voteForm {
+  width: 90%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#voteForm label {
+  width: 100%;
+}
+.vote-options-container {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.vote-options-container .vote-option {
+  background-color: white;
+  transition: background-color 0.3s ease;
+}
+
+.vote-options-container .vote-option.selected {
+  background-color: #b3d9ff;
+}
+
+.vote-options-container .vote-option input[type="radio"]:checked + span {
+  font-weight: bold;
 }

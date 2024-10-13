@@ -1,14 +1,15 @@
 // 應用程序入口
-import { fetchVoteResult } from "./api.js";
-import { renderVoteDisplay } from "./dom.js";
+import { fetchVoteDataWithStatus } from "./api.js";
+import { renderVoteDisplay, renderVoteForm } from "./dom.js";
 import { initializeWebSocket } from "./websocket.js";
 
 async function initialize() {
   try {
     const voteId = getVoteId();
-    const vote = await fetchVoteResult(voteId);
-    console.log("投票詳細資訊:", JSON.stringify(vote, null, 2)); //! 測試
-    renderVoteDisplay(vote);
+    const voteData = await fetchVoteDataWithStatus(voteId);
+    console.log("投票詳細資訊:", JSON.stringify(voteData, null, 2)); //! 測試
+    // renderVoteDisplay(voteData);
+    renderVoteForm(voteData); // ! 測試
     initializeWebSocket(voteId);
   } catch (error) {
     displayError(error.message);

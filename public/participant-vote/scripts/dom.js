@@ -1,4 +1,6 @@
 // 處理 DOM 操作
+// TODO 這個腳本的複雜度太高，需要重構
+
 import { submitVote } from "./websocket.js";
 
 let isVotingActive;
@@ -53,8 +55,8 @@ export function updateUIBasedOnVotingStatus(isActive) {
 
 // ============================ 渲染投票表單============================
 export function renderVoteForm(vote) {
-  document.getElementById("voteTitle").textContent = vote.title;
-  document.getElementById("voteDescription").textContent = vote.description;
+  renderTitleAndDescription(vote);
+
   const voteId = vote.id;
   const options = vote.options;
   const formContainer = document.getElementById("voteOptions");
@@ -98,44 +100,59 @@ export function renderVoteForm(vote) {
   submitButton.textContent = "提交";
 
   form.appendChild(submitButton);
-  form.addEventListener("submit", (event) => handleFormSubmit(event, voteId));
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const selectedOption = form.querySelector(
+      'input[name="voteOption"]:checked'
+    );
+    if (selectedOption) {
+      const optionId = selectedOption.value;
+      const voterName = getVoterName();
+      const submittedOptionId = submitVote(voteId, optionId, voterName);
+      renderVoteResult(vote, submittedOptionId);
+      updateUIBasedOnVotingStatus(vote.status);
+    } else {
+      alert("請選擇一個選項");
+    }
+  });
 
   formContainer.appendChild(form);
+}
+
+function renderTitleAndDescription(vote) {
+  document.getElementById("voteTitle").textContent = vote.title;
+  document.getElementById("voteDescription").textContent = vote.description;
 }
 
 // ============================ 渲染投票表單============================
 
 export function renderVoteDisplay(vote) {
-  renderVoteInfo(vote);
-  renderOptions(vote);
+  renderTitleAndDescription(vote);
+  renderVoteResult(vote);
   updateUIBasedOnVotingStatus(vote.status);
 }
 
-function renderVoteInfo(vote) {
-  document.getElementById("voteTitle").textContent = vote.title;
-  document.getElementById("voteDescription").textContent = vote.description;
-  document.getElementById(
-    "totalVotes"
-  ).textContent = `總票數: ${vote.totalVotes}`;
-}
-
-function renderOptions(vote) {
-  const voteId = vote.id;
+function renderVoteResult(vote, submittedOptionId) {
   const options = vote.options;
   const optionsContainer = document.getElementById("voteOptions");
   optionsContainer.innerHTML = "";
   options.forEach((option) => {
-    optionsContainer.appendChild(createOptionElement(voteId, option));
+    optionsContainer.appendChild(
+      createOptionElement(option, submittedOptionId)
+    );
   });
 }
 
-function createOptionElement(voteId, option) {
+function createOptionElement(option, selectedOptionId) {
   const optionElement = document.createElement("div");
   optionElement.className = "col-12 px-1";
   optionElement.id = `option-${option.id}`;
 
+  const isSelected = option.id === selectedOptionId;
+  const selectedClass = isSelected ? "selected-option" : "";
+
   optionElement.innerHTML = `
-    <div class="card">
+    <div class="card ${selectedClass}">
       <div class="card-body">
         <h5 class="card-title">${option.name}</h5>
         <div class="d-flex align-items-center mb-2">
@@ -153,20 +170,17 @@ function createOptionElement(voteId, option) {
     </div>
   `;
 
-  const voteButton = createVoteButton(voteId, option.id);
-  optionElement.querySelector(".card-body").appendChild(voteButton);
-
   return optionElement;
 }
 
-function createVoteButton(voteId, optionId) {
-  const voteButton = document.createElement("button");
-  voteButton.className = "btn btn-primary btn-circle btn-sm";
-  voteButton.textContent = "投票";
-  const voterName = getVoterName();
-  voteButton.onclick = () => submitVote(voteId, optionId, voterName);
-  return voteButton;
-}
+// function createVoteButton(voteId, optionId) {
+//   const voteButton = document.createElement("button");
+//   voteButton.className = "btn btn-primary btn-circle btn-sm";
+//   voteButton.textContent = "投票";
+//   const voterName = getVoterName();
+//   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
+//   return voteButton;
+// }
 
 export function getVoterName() {
   const name = localStorage.getItem("voterName");

@@ -38,6 +38,7 @@ export function submitVote(voteId, optionId) {
   try {
     const voterName = getVoterName();
     socket.emit("voteForTopic", { voteId, optionId, voterName });
+    return optionId;
   } catch (error) {
     throw new Error("發送投票請求時發生錯誤: " + error.message);
   }

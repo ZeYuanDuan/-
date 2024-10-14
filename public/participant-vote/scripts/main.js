@@ -8,8 +8,7 @@ async function initialize() {
     const voteId = getVoteId();
     const voteData = await fetchVoteDataWithStatus(voteId);
     console.log("投票詳細資訊:", JSON.stringify(voteData, null, 2)); //! 測試
-    // renderVoteDisplay(voteData);
-    renderVoteForm(voteData); // ! 測試
+    renderVoteForm(voteData);
     initializeWebSocket(voteId);
   } catch (error) {
     displayError(error.message);

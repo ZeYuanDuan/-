@@ -105,6 +105,10 @@ html {
   margin-top: auto;
 }
 
+.selected-option {
+  background-color: #f0f0f0; /* 淡灰色背景 */
+}
+
 /* 投票表單 */
 #voteForm input[type="radio"]:checked + span {
   font-weight: bold;

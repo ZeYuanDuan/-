@@ -5,6 +5,17 @@ let voteData = {}; // 將 voteData 改為物件
 
 document.addEventListener("DOMContentLoaded", initializeVoteList);
 
+// 監聽 pageshow 和 popstate 確保狀態更新
+window.addEventListener("pageshow", initializeVoteList);
+window.addEventListener("popstate", initializeVoteList);
+
+// 監聽 visibilitychange，當用戶切換頁面或回到該頁面時重新載入狀態
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible") {
+    initializeVoteList();
+  }
+});
+
 async function initializeVoteList() {
   try {
     const [votes, statuses] = await Promise.all([
@@ -34,6 +45,11 @@ function updateVoteList() {
     voteList.innerHTML = Object.values(voteData)
       .map((vote, index) => createVoteRow(vote, index + 1))
       .join("");
+
+    // * 依照 status 更新按鈕樣式，不過這裡的寫法不太好，因為「狀態」欄位是直接按照 status 渲染相應的樣式，按鈕卻是渲染完畢後才更新狀態，兩邊的做法不一致，維護上會較麻煩
+    Object.values(voteData).forEach((vote) => {
+      updateButtonStatus(vote.id, vote.status);
+    });
   }
 }
 
@@ -102,6 +118,43 @@ export function updateVoteStatus(voteId, status) {
 
   statusCell.className = `vote-information vote-status ${statusClass}`;
   statusCell.innerHTML = `<i class="fas ${statusIcon}"></i> <span class="font-weight-bold">${statusText}</span>`;
+
+  updateButtonStatus(voteId, status);
+}
+
+function updateButtonStatus(voteId, status) {
+  const row = document.querySelector(`tr[data-vote-id="${voteId}"]`);
+  if (!row) {
+    console.error(`無法找到投票 ID ${voteId} 的行`);
+    return;
+  }
+
+  const editButton = row.querySelector('a[href*="update-vote"]');
+  const deleteButton = row.querySelector("button.delete-vote-btn");
+
+  if (!editButton && !deleteButton) {
+    console.error(`無法找到投票 ID ${voteId} 的編輯或刪除按鈕`);
+    return;
+  }
+
+  const updateButton = (button, isEnabled) => {
+    if (button) {
+      if (isEnabled) {
+        button.classList.add("disabled", "btn-secondary");
+        button.classList.remove("btn-warning", "btn-danger");
+        button.setAttribute("disabled", "disabled");
+      } else {
+        button.classList.remove("disabled", "btn-secondary");
+        button.classList.add(
+          button.tagName === "A" ? "btn-warning" : "btn-danger"
+        );
+        button.removeAttribute("disabled");
+      }
+    }
+  };
+
+  updateButton(editButton, status);
+  updateButton(deleteButton, status);
 }
 
 // 時區轉換函數

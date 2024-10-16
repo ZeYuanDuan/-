@@ -3,8 +3,6 @@
 
 import { submitVote } from "./websocket.js";
 
-let isVotingActive;
-
 // ============================ 根據投票狀態更新 UI ============================
 function toggleElementsVisibility(isActive) {
   const elementsToToggle = [
@@ -43,8 +41,6 @@ function toggleElementsVisibility(isActive) {
 }
 
 export function updateUIBasedOnVotingStatus(isActive) {
-  isVotingActive = isActive; // 將投票狀態更新至全域變數
-
   if (isActive) {
     toggleElementsVisibility(true);
   } else {
@@ -109,6 +105,7 @@ export function renderVoteForm(vote) {
       const optionId = selectedOption.value;
       const voterName = getVoterName();
       const submittedOptionId = submitVote(voteId, optionId, voterName);
+      console.log("submittedOptionId", submittedOptionId); // ! 測試用
       renderVoteResult(vote, submittedOptionId);
       updateUIBasedOnVotingStatus(vote.status);
     } else {
@@ -126,12 +123,6 @@ function renderTitleAndDescription(vote) {
 
 // ============================ 渲染投票表單============================
 
-export function renderVoteDisplay(vote) {
-  renderTitleAndDescription(vote);
-  renderVoteResult(vote);
-  updateUIBasedOnVotingStatus(vote.status);
-}
-
 function renderVoteResult(vote, submittedOptionId) {
   const options = vote.options;
   const optionsContainer = document.getElementById("voteOptions");
@@ -143,13 +134,13 @@ function renderVoteResult(vote, submittedOptionId) {
   });
 }
 
-function createOptionElement(option, selectedOptionId) {
+function createOptionElement(option, submittedOptionId) {
+  const isSelected = String(option.id) === String(submittedOptionId);
+  const selectedClass = isSelected ? "selected-option" : "";
+
   const optionElement = document.createElement("div");
   optionElement.className = "col-12 px-1";
   optionElement.id = `option-${option.id}`;
-
-  const isSelected = option.id === selectedOptionId;
-  const selectedClass = isSelected ? "selected-option" : "";
 
   optionElement.innerHTML = `
     <div class="card ${selectedClass}">
@@ -172,15 +163,6 @@ function createOptionElement(option, selectedOptionId) {
 
   return optionElement;
 }
-
-// function createVoteButton(voteId, optionId) {
-//   const voteButton = document.createElement("button");
-//   voteButton.className = "btn btn-primary btn-circle btn-sm";
-//   voteButton.textContent = "投票";
-//   const voterName = getVoterName();
-//   voteButton.onclick = () => submitVote(voteId, optionId, voterName);
-//   return voteButton;
-// }
 
 export function getVoterName() {
   const name = localStorage.getItem("voterName");
@@ -211,12 +193,6 @@ export function renderVoteCounts(vote) {
           </div>
           <span class="text-muted">${option.percentage}</span>
         `;
-      }
-
-      let voteButton = optionElement.querySelector("button");
-      if (!voteButton) {
-        voteButton = createVoteButton(vote.id, option.id);
-        optionElement.querySelector(".card-body").appendChild(voteButton);
       }
     }
   });

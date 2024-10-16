@@ -1,6 +1,6 @@
 // 應用程序入口
 import { fetchVoteDataWithStatus } from "./api.js";
-import { renderVoteDisplay, renderVoteForm } from "./dom.js";
+import { renderVoteForm } from "./dom.js";
 import { initializeWebSocket } from "./websocket.js";
 
 async function initialize() {

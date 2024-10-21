@@ -58,9 +58,13 @@ export function renderVoteDisplay(vote) {
 }
 
 function setupQRCodeAndParticipantLink(voteId) {
+  const qrcodeElement = document.getElementById("qrcode");
+
+  qrcodeElement.innerHTML = "";
+
   const newUrl = `http://127.0.0.1:5500/public/participant/participant.html?voteId=${voteId}`;
 
-  new QRCode(document.getElementById("qrcode"), {
+  new QRCode(qrcodeElement, {
     text: newUrl,
     width: 128,
     height: 128,
@@ -70,7 +74,7 @@ function setupQRCodeAndParticipantLink(voteId) {
   participantLink.href = `../participant/participant.html?voteId=${voteId}`;
   participantLink.textContent = "參與者投票頁面";
 
-  document.getElementById("qrcode").appendChild(participantLink);
+  qrcodeElement.appendChild(participantLink);
 }
 
 function setupToggleButton() {

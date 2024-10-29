@@ -4,7 +4,8 @@ import { WEB_SOCKET_CHANNELS } from "../../websocket/webSocketChannels";
 export async function notifyVoteResultToWebSocketClient(
   io: Server,
   voteId: string,
-  voteData: any
+  voteData: any,
+  voterName: string
 ): Promise<void> {
   if (!voteData) {
     io.emit(WEB_SOCKET_CHANNELS.VOTE_RESULT_ERROR(voteId), {
@@ -19,7 +20,7 @@ export async function notifyVoteResultToWebSocketClient(
 
   const result = {
     success: true,
-    data: { vote: voteData },
+    data: { vote: voteData, voterName },
     message: "投票結果獲取成功",
   };
 

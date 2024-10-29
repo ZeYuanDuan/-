@@ -14,6 +14,7 @@ export function initializeWebSocket(voteId) {
   socket.on(`voteResult:${voteId}`, (data) => {
     if (data.success) {
       renderVoteCounts(data.data.vote); // 更新票數
+      console.log(`${data.data.voterName} 完成投票`);
     } else {
       console.error("獲取投票結果失敗:", data.error);
     }

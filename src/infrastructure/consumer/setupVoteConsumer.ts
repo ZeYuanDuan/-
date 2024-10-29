@@ -26,7 +26,12 @@ export async function setupVoteConsumer(channel: Channel, io: Server) {
           if (result.success) {
             const voteData = await getVoteResultFromRedisAndCalculate(voteId);
             if (voteData) {
-              await notifyVoteResultToWebSocketClient(io, voteId, voteData);
+              await notifyVoteResultToWebSocketClient(
+                io,
+                voteId,
+                voteData,
+                voterName
+              );
               channel.ack(msg);
             } else {
               console.error("獲取投票數據失敗");

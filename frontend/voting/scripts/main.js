@@ -41,13 +41,13 @@ function getVoteId() {
 // 在 DOM 加載完成後初始化
 document.addEventListener("DOMContentLoaded", initialize);
 
-// 監聽 pageshow 和 popstate 確保狀態更新
-window.addEventListener("pageshow", fetchAndRenderVoteData);
-window.addEventListener("popstate", fetchAndRenderVoteData);
+// // 監聽 pageshow 和 popstate 確保狀態更新
+// window.addEventListener("pageshow", fetchAndRenderVoteData);
+// window.addEventListener("popstate", fetchAndRenderVoteData);
 
-// 監聽 visibilitychange，當用戶切換頁面或回到該頁面時重新載入狀態
-document.addEventListener("visibilitychange", function () {
-  if (document.visibilityState === "visible") {
-    fetchAndRenderVoteData();
-  }
-});
+// // 監聽 visibilitychange，當用戶切換頁面或回到該頁面時重新載入狀態
+// document.addEventListener("visibilitychange", function () {
+//   if (document.visibilityState === "visible") {
+//     fetchAndRenderVoteData();
+//   }
+// });

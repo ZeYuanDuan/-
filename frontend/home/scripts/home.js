@@ -91,15 +91,16 @@ function createVoteRow(vote, index) {
         ${vote.description || "----- 無描述 -----"}
       </td>
     </tr>
-  <!-- 測試用代碼開始 -->
-  <tr class="vote-debug" data-vote-id="${vote.id}">
-    <td colspan="5">
-      <pre>${JSON.stringify(voteData[vote.id], null, 2)}</pre>
-    </td>
-  </tr>
-  <!-- 測試用代碼結束 -->
   `;
 }
+
+// <!-- 測試用代碼開始 -->
+// <tr class="vote-debug" data-vote-id="${vote.id}">
+//   <td colspan="5">
+//     <pre>${JSON.stringify(voteData[vote.id], null, 2)}</pre>
+//   </td>
+// </tr>
+// <!-- 測試用代碼結束 -->
 
 export function updateVoteStatus(voteId, status) {
   const voteKey = String(voteId);

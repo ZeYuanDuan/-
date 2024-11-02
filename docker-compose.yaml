@@ -1,0 +1,96 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: dockerfiles/nginx.dockerfile
+    ports:
+      - "8080:80"
+    # volumes:
+    #   - ./frontend:/usr/share/nginx/html
+    #   - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - node
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  node:
+    build:
+      context: .
+      dockerfile: dockerfiles/node.dockerfile
+    ports:
+      - "3000:3000"
+      - "3307:3307"
+    env_file:
+      - ./env/node.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app-network
+    depends_on:
+      - redis
+      - rabbitmq
+  redis:
+    build:
+      context: .
+      dockerfile: dockerfiles/redis.dockerfile
+    # ports:
+    #   - "6379:6379"
+    env_file:
+      - ./env/redis.env
+    volumes:
+      - ./conf/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - app-network
+  rabbitmq:
+    build:
+      context: .
+      dockerfile: dockerfiles/rabbitmq.dockerfile
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    # env_file:
+    #   - ./env/rabbitmq.env
+    volumes:
+      - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # 測試數據庫連接
+  node_test:
+    build:
+      context: .
+      dockerfile: dockerfiles/node.dockerfile
+    volumes:
+      - ./backend:/app/backend
+    command: npx ts-node backend/models/mysql/migrations/test-connection.ts
+    env_file:
+      - ./env/node.env
+    profiles:
+      - test
+  # 測試 RabbitMQ 連接
+  rabbitmq_test:
+    build:
+      context: .
+      dockerfile: dockerfiles/node.dockerfile
+    volumes:
+      - ./backend:/app/backend
+    command: npx ts-node backend/models/rabbitMQ/test-connection.ts
+    env_file:
+      - ./env/node.env
+    depends_on:
+      - rabbitmq
+    profiles:
+      - test
+
+networks:
+  app-network:
+    driver: bridge

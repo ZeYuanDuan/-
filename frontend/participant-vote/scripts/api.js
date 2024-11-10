@@ -1,5 +1,5 @@
 // 處理 API 請求
-export const API_BASE_URL = "http://localhost:3000";
+import { API_BASE_URL } from "../../config.js";
 
 export async function fetchVoteResult(voteId) {
   try {

@@ -1,4 +1,5 @@
-import { API_BASE_URL } from "../voting/scripts/api.js";
+import { API_BASE_URL } from "../config.js";
+import { ROUTES } from "../config.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
   try {
@@ -17,7 +18,7 @@ document
     const voterName = document.getElementById("voterName").value;
     localStorage.setItem("voterName", voterName);
     const voteId = getVoteId();
-    window.location.href = `../participant-vote/voting.html?voteId=${voteId}`;
+    window.location.href = `..${ROUTES.PARTICIPANT_VOTE}?voteId=${voteId}`;
   });
 
 function getVoteId() {

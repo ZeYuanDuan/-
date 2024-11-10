@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3000";
+import { API_BASE_URL, ROUTES } from "../config.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("createVoteForm");
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.data.success) {
         alert("投票創建成功！");
-        window.location.href = `../voting/voting.html?voteId=${response.data.data.vote.id}`;
+        window.location.href = `..${ROUTES.VOTING}?voteId=${response.data.data.vote.id}`;
       } else {
         alert("創建投票失敗：" + response.data.error.message);
       }

@@ -1,7 +1,8 @@
 // WebSocket 連接
 import { updateVoteStatus } from "./home.js";
+import { WEBSOCKET_URL } from "../../config.js";
 
-const socket = io("http://localhost:3000");
+const socket = io(WEBSOCKET_URL);
 
 // 連接成功時的處理
 socket.on("connect", () => {

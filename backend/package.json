@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node dist/app.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "dev": "ts-node-dev --respawn --transpile-only app.ts",
     "build": "tsc",
     "test-connection": "ts-node src/models/mysql/migrations/test-connection.ts",
     "test-rabbitmq": "ts-node src/models/rabbitmq/test-connection.ts"

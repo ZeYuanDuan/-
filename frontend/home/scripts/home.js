@@ -1,4 +1,9 @@
-import { API_BASE_URL, DATE_TIME_FORMAT, TIME_ZONE } from "./config.js";
+import {
+  API_BASE_URL,
+  DATE_TIME_FORMAT,
+  TIME_ZONE,
+  ROUTES,
+} from "../../config.js";
 import { fetchVotes, fetchVoteStatuses, deleteVoteById } from "./api.js";
 
 let voteData = {}; // 將 voteData 改為物件
@@ -206,4 +211,9 @@ document.getElementById("voteList").addEventListener("click", function (event) {
     const voteId = button.closest("tr").dataset.voteId;
     deleteVote(voteId);
   }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const createVoteLink = document.querySelector(".create-vote-btn");
+  createVoteLink.href = `..${ROUTES.CREATE_VOTE}`;
 });

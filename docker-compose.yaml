@@ -1,22 +1,32 @@
 services:
-  nginx:
+  # nginx:
+  # build:
+  #   context: .
+  #   dockerfile: dockerfiles/nginx.dockerfile
+  # ports:
+  #   - "8080:80"
+  # # volumes:
+  # #   - ./frontend:/usr/share/nginx/html
+  # #   - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  # depends_on:
+  #   - node
+  # networks:
+  #   - app-network
+  # healthcheck:
+  #   test: ["CMD", "nginx", "-t"]
+  #   interval: 10s
+  #   timeout: 5s
+  #   retries: 3
+  frontend:
     build:
       context: .
-      dockerfile: dockerfiles/nginx.dockerfile
+      dockerfile: dockerfiles/frontend.dockerfile
     ports:
-      - "8080:80"
-    # volumes:
-    #   - ./frontend:/usr/share/nginx/html
-    #   - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - node
+      - "3301:3301"
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    depends_on:
+      - node
   node:
     build:
       context: .

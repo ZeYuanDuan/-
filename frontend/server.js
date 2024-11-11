@@ -6,13 +6,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 5500;
+const PORT = 3301;
+
+// 路由設置
+const router = express.Router();
 
 // 設置靜態文件目錄
 app.use(express.static(__dirname));
 
-// 路由設置
-const router = express.Router();
+app.use("/", router);
 
 // 主頁重定向
 router.get("/", (req, res) => {
@@ -44,8 +46,6 @@ router.get("/update-vote", (req, res) => {
 router.use((req, res) => {
   res.status(404).send("頁面不存在");
 });
-
-app.use("/", router);
 
 app.listen(PORT, () => {
   console.log(`服務器運行在 http://localhost:${PORT}`);

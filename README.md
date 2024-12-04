@@ -100,6 +100,7 @@ Below is the LivePoll system architecture, followed by a step-by-step explanatio
 
 
 ## Demo
+*The live demo is being prepared and will be available soon.*
 
 ## License
 

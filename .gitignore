@@ -138,3 +138,5 @@ DEV_LOG.md
 # 忽略所有環境變量文件和目錄
 /env/
 env/*
+
+bash.exe.stackdump

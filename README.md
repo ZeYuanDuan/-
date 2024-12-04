@@ -1,8 +1,9 @@
 # LivePoll
 
+LivePoll is a real-time polling platform designed to deliver efficient, reliable cross-device synchronization of voting results.
+
 ![System Architecture](assets/images/system-architecture.png)
 
-LivePoll is a real-time polling platform designed to deliver efficient, reliable cross-device synchronization of voting results.
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -65,8 +66,37 @@ Do you need a quick way to collect audience feedback during meetings, conference
 
 ## System Architecture
 
-The system architecture is illustrated below:
+
+Below is the LivePoll system architecture, followed by a step-by-step explanation:  
+
 ![System Architecture](assets/images/system-architecture.png)
+
+
+### **1. Retrieving Poll Data (When Voting Is Not Active)**
+
+1. A user sends an HTTP request to a specific route to retrieve poll data.
+2. The backend queries the **MySQL database** for the requested data.
+3. The retrieved data is sent back to the user as an HTTP response. 
+
+---
+
+### **2. Submitting Votes (During Active Polling)**
+
+1. A user submits their vote via **Socket.io**, sending the message to the backend.
+2. The backend forwards the vote message to a **RabbitMQ message queue** for processing.
+3. The backend  retrieves the message from RabbitMQ and:
+   - Updates the **Redis cache** with the latest vote counts for real-time tracking.
+   - Sends an acknowledgment (Ack) to RabbitMQ, confirming successful processing.
+4. The backend then broadcasts the updated vote results via **Socket.io** to all connected clients, ensuring real-time synchronization.
+
+---
+
+### **3. Finalizing Poll Results (When Voting Ends)**
+
+1. The backend sends a **Socket.io** message to all connected clients to indicate the poll has ended, disabling voting interfaces.
+2. The backend retrieves the temporary vote data from **Redis**.
+3. The final results are written to the **MySQL database** for persistent storage.
+4. Redis cache is cleared to remove the temporary vote data, ensuring fresh data for the next poll.
 
 
 ## Demo
